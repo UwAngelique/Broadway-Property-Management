@@ -1,0 +1,17 @@
+{
+  "name": "Broadway Property Management",
+  "short_name": "Broadway PM",
+  "description": "Rwanda property management — RWF, UPI, MoMo proof",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/broadway-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

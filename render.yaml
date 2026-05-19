@@ -1,0 +1,34 @@
+# Render Blueprint — Broadway PM API (staging)
+# Database: use Neon (https://neon.tech) — copy DATABASE_URL into Render env as discrete vars or use connection string via TypeORM URL config.
+services:
+  - type: web
+    name: broadway-pm-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_SYNCHRONIZE
+        value: "false"
+      - key: PORT
+        value: 3000
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: broadway_pm
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        sync: false
+      - key: APP_URL
+        sync: false

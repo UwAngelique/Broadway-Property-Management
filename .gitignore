@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# OS and IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Logs
+*.log

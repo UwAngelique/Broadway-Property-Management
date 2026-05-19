@@ -1,0 +1,139 @@
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { SignupDto } from './dto/signup.dto';
+import { LoginDto } from './dto/login.dto';
+import { GoogleSigninDto } from './dto/google-signin.dto';
+import { MicrosoftSigninDto } from './dto/microsoft-signin.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './current-user.decorator';
+import type { JwtUserPayload } from './types';
+import { AuditService } from '../audit/audit.service';
+import type { Request } from 'express';
+
+@Controller('auth')
+export class AuthController {
+  constructor(
+    private readonly authService: AuthService,
+    private readonly auditService: AuditService,
+  ) {}
+
+  @Post('signup')
+  signup(@Body() dto: SignupDto, @Req() req: Request) {
+    return this.authService.signup(dto).then(async (result) => {
+      await this.auditService.log({
+        accountId: result.user.accountId,
+        userId: result.user.id,
+        userEmail: result.user.email,
+        userRole: result.user.role,
+        action: 'CREATE',
+        resourceType: 'USER',
+        resourceId: String(result.user.id),
+        details: `Signed up using email/password${dto.selectedPlanId ? ` (plan: ${dto.selectedPlanId})` : ''}`,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
+  @Post('login')
+  login(@Body() dto: LoginDto, @Req() req: Request) {
+    return this.authService.login(dto).then(async (result) => {
+      await this.auditService.log({
+        accountId: result.user.accountId,
+        userId: result.user.id,
+        userEmail: result.user.email,
+        userRole: result.user.role,
+        action: 'LOGIN',
+        resourceType: 'AUTH_SESSION',
+        resourceId: String(result.user.id),
+        details: 'Logged in using email/password',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
+  @Post('google')
+  googleSignIn(@Body() dto: GoogleSigninDto, @Req() req: Request) {
+    return this.authService.googleSignIn(dto).then(async (result) => {
+      await this.auditService.log({
+        accountId: result.user.accountId,
+        userId: result.user.id,
+        userEmail: result.user.email,
+        userRole: result.user.role,
+        action: 'LOGIN',
+        resourceType: 'AUTH_SESSION',
+        resourceId: String(result.user.id),
+        details: 'Logged in using Google',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
+  @Post('microsoft')
+  microsoftSignIn(@Body() dto: MicrosoftSigninDto, @Req() req: Request) {
+    return this.authService.microsoftSignIn(dto).then(async (result) => {
+      await this.auditService.log({
+        accountId: result.user.accountId,
+        userId: result.user.id,
+        userEmail: result.user.email,
+        userRole: result.user.role,
+        action: 'LOGIN',
+        resourceType: 'AUTH_SESSION',
+        resourceId: String(result.user.id),
+        details: 'Logged in using Microsoft',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
+  @Post('refresh')
+  refresh(@Body() dto: RefreshTokenDto) {
+    return this.authService.refresh(dto.refreshToken);
+  }
+
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
+  }
+
+  @Post('reset-password')
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto.token, dto.newPassword);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  logout(@CurrentUser() user: JwtUserPayload, @Req() req: Request) {
+    return this.authService.logout(user.sub).then(async (result) => {
+      await this.auditService.log({
+        accountId: user.accountId,
+        userId: user.sub,
+        userEmail: user.email,
+        userRole: user.role,
+        action: 'LOGOUT',
+        resourceType: 'AUTH_SESSION',
+        resourceId: String(user.sub),
+        details: 'Logged out',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  me(@CurrentUser() user: JwtUserPayload) {
+    return this.authService.me(user.sub);
+  }
+}
