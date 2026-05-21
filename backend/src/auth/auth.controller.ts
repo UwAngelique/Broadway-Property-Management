@@ -12,6 +12,9 @@ import { CurrentUser } from './current-user.decorator';
 import type { JwtUserPayload } from './types';
 import { AuditService } from '../audit/audit.service';
 import type { Request } from 'express';
+import { PhoneRequestOtpDto } from './dto/phone-request-otp.dto';
+import { PhoneVerifyOtpDto } from './dto/phone-verify-otp.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -20,13 +23,40 @@ export class AuthController {
     private readonly auditService: AuditService,
   ) {}
 
+  @Post('phone/request-otp')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  requestPhoneOtp(@Body() dto: PhoneRequestOtpDto) {
+    return this.authService.requestPhoneOtp(dto);
+  }
+
+  @Post('phone/verify-otp')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  verifyPhoneOtp(@Body() dto: PhoneVerifyOtpDto, @Req() req: Request) {
+    return this.authService.verifyPhoneOtp(dto).then(async (result) => {
+      await this.auditService.log({
+        accountId: result.user.accountId,
+        userId: result.user.id,
+        userEmail: result.user.email ?? dto.phone,
+        userRole: result.user.role,
+        action: 'LOGIN',
+        resourceType: 'AUTH_SESSION',
+        resourceId: String(result.user.id),
+        details: 'Logged in using phone OTP',
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+      return result;
+    });
+  }
+
   @Post('signup')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   signup(@Body() dto: SignupDto, @Req() req: Request) {
     return this.authService.signup(dto).then(async (result) => {
       await this.auditService.log({
         accountId: result.user.accountId,
         userId: result.user.id,
-        userEmail: result.user.email,
+        userEmail: result.user.email ?? '',
         userRole: result.user.role,
         action: 'CREATE',
         resourceType: 'USER',
@@ -40,12 +70,13 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   login(@Body() dto: LoginDto, @Req() req: Request) {
     return this.authService.login(dto).then(async (result) => {
       await this.auditService.log({
         accountId: result.user.accountId,
         userId: result.user.id,
-        userEmail: result.user.email,
+        userEmail: result.user.email ?? '',
         userRole: result.user.role,
         action: 'LOGIN',
         resourceType: 'AUTH_SESSION',
@@ -64,7 +95,7 @@ export class AuthController {
       await this.auditService.log({
         accountId: result.user.accountId,
         userId: result.user.id,
-        userEmail: result.user.email,
+        userEmail: result.user.email ?? '',
         userRole: result.user.role,
         action: 'LOGIN',
         resourceType: 'AUTH_SESSION',
@@ -83,7 +114,7 @@ export class AuthController {
       await this.auditService.log({
         accountId: result.user.accountId,
         userId: result.user.id,
-        userEmail: result.user.email,
+        userEmail: result.user.email ?? '',
         userRole: result.user.role,
         action: 'LOGIN',
         resourceType: 'AUTH_SESSION',

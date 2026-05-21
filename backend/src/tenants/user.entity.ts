@@ -17,8 +17,18 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'varchar', length: 255, unique: true })
-  email: string;
+  @Column({ type: 'varchar', length: 255, unique: true, nullable: true })
+  email?: string;
+
+  @Column({ type: 'varchar', length: 20, nullable: true, unique: true })
+  phone?: string;
+
+  @Column({ type: 'boolean', default: false })
+  phoneVerified: boolean;
+
+  /** MTN | AIRTEL — detected from Rwanda number prefix */
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  mobileNetwork?: string;
 
   @Column({ default: 1, nullable: true })
   accountId: number;
@@ -31,7 +41,7 @@ export class User {
   passwordHash?: string;
 
   @Column({ type: 'varchar', length: 20, default: 'LOCAL' })
-  authProvider: 'LOCAL' | 'GOOGLE' | 'MICROSOFT';
+  authProvider: 'LOCAL' | 'GOOGLE' | 'MICROSOFT' | 'PHONE';
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   googleSub?: string;

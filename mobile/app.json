@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Broadway Property Management",
+    "slug": "broadway-pm",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#111827"
+    },
+    "ios": {
+      "bundleIdentifier": "rw.broadway.pm",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "rw.broadway.pm",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#111827"
+      }
+    },
+    "extra": {
+      "apiUrl": "https://YOUR-API.ondigitalocean.app"
+    }
+  }
+}

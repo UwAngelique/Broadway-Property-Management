@@ -1,25 +1,36 @@
+import { refreshAccessToken } from "./token-refresh";
+
 /** Use /api proxy in browser (tunnel-friendly); direct URL for server or explicit env */
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   (typeof window !== "undefined" ? "/api" : "http://localhost:3000");
+
+async function fetchWithAuth(path: string, options: RequestInit, accessToken?: string) {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string> | undefined),
+  };
+  if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+  let response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+
+  if (response.status === 401 && accessToken && typeof window !== "undefined") {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers.Authorization = `Bearer ${newToken}`;
+      response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+    }
+  }
+
+  return response;
+}
 
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
   accessToken?: string,
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(options.headers as Record<string, string> | undefined),
-  };
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`;
-  }
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const response = await fetchWithAuth(path, options, accessToken);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(text || `Request failed with ${response.status}`);

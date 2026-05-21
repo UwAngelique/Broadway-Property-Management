@@ -102,6 +102,43 @@ export default function SettingsPage() {
         </p>
       </section>
 
+      {user.role === "OWNER" ? (
+        <section className="bg-white rounded-xl border p-4 mb-4 space-y-3 text-sm">
+          <h2 className="font-semibold">Broadway subscription billing</h2>
+          <p className="text-gray-600">
+            Pay your SaaS plan via Stripe (cards). Configure STRIPE_PRICE_* on the API server first.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="rounded bg-gray-900 text-white px-4 py-2"
+              onClick={async () => {
+                if (!token) return;
+                const r = await apiRequest<{ checkoutUrl: string }>(
+                  "/billing/checkout",
+                  { method: "POST", body: JSON.stringify({ planId: "professional" }) },
+                  token,
+                );
+                if (r.checkoutUrl) window.location.href = r.checkoutUrl;
+              }}
+            >
+              Subscribe (Professional)
+            </button>
+            <button
+              type="button"
+              className="rounded border px-4 py-2"
+              onClick={async () => {
+                if (!token) return;
+                const r = await apiRequest<{ url: string }>("/billing/portal", { method: "POST" }, token);
+                if (r.url) window.location.href = r.url;
+              }}
+            >
+              Manage billing
+            </button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="bg-white rounded-xl border p-4 space-y-2 text-sm">
         <h2 className="font-semibold">Legal & support</h2>
         <p>

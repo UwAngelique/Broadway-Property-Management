@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   Req,
+  Headers,
   StreamableFile,
   UploadedFile,
   UseGuards,
@@ -383,9 +384,18 @@ export class PaymentsController {
 
   @Public()
   @Post('webhooks/provider')
-  async providerWebhook(@Body() payload: Record<string, unknown>) {
-    // Keep provider-agnostic for now; map provider fields in a dedicated adapter later.
-    return this.paymentsService.processProviderWebhook(payload);
+  @Public()
+  async providerWebhook(
+    @Body() payload: Record<string, unknown>,
+    @Req() req: Request & { rawBody?: Buffer },
+    @Headers('x-webhook-signature') signature?: string,
+  ) {
+    const raw = req.rawBody?.toString('utf8') ?? JSON.stringify(payload);
+    return this.paymentsService.processProviderWebhook(
+      payload,
+      signature ?? (req.headers['x-signature'] as string),
+      raw,
+    );
   }
 
   @Post('reconciliation/run')

@@ -1,9 +1,19 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { validateProductionEnv } from './config/env.validation';
 import * as fs from 'fs';
+import helmet from 'helmet';
 
-const uploadDirs = ['./uploads/payments', './uploads/contracts', './uploads/expenses', './uploads/ebm', './uploads/rdb'];
+const uploadDirs = [
+  './uploads/payments',
+  './uploads/contracts',
+  './uploads/expenses',
+  './uploads/ebm',
+  './uploads/rdb',
+  './uploads/statements',
+  './uploads/invoices',
+];
 for (const dir of uploadDirs) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
@@ -11,7 +21,13 @@ for (const dir of uploadDirs) {
 }
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: true });
+  validateProductionEnv();
+
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true,
+  });
+
+  app.use(helmet({ contentSecurityPolicy: false }));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,7 +38,7 @@ async function bootstrap() {
 
   const origins = process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()).filter(Boolean);
   app.enableCors({
-    origin: origins?.length ? origins : true,
+    origin: origins?.length ? origins : process.env.NODE_ENV !== 'production',
     credentials: true,
   });
 

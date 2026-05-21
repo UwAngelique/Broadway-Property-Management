@@ -18,6 +18,7 @@ import { TenantProfile } from '../tenants/tenant-profile.entity';
 import { User } from '../tenants/user.entity';
 import { Account } from '../accounts/account.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../realtime/events.gateway';
 
 @Injectable()
 export class PaymentsService {
@@ -40,6 +41,7 @@ export class PaymentsService {
     private readonly accountsRepo: Repository<Account>,
     private readonly paymentGatewayService: PaymentGatewayService,
     private readonly notificationsService: NotificationsService,
+    private readonly eventsGateway: EventsGateway,
   ) {}
 
   async getSettings(accountId: number) {
@@ -282,7 +284,24 @@ export class PaymentsService {
     return invoice;
   }
 
-  async processProviderWebhook(payload: Record<string, unknown>) {
+  async processProviderWebhook(
+    payload: Record<string, unknown>,
+    signature?: string,
+    rawBody?: string,
+  ) {
+    const secret = process.env.PAYMENT_WEBHOOK_SECRET;
+    if (secret && signature && rawBody) {
+      const crypto = await import('crypto');
+      const expected = crypto
+        .createHmac('sha256', secret)
+        .update(rawBody)
+        .digest('hex');
+      const normalized = signature.replace(/^sha256=/, '');
+      if (expected !== normalized && signature !== expected) {
+        throw new BadRequestException('Invalid webhook signature');
+      }
+    }
+
     const providerReference =
       typeof payload.providerReference === 'string'
         ? payload.providerReference
@@ -293,9 +312,25 @@ export class PaymentsService {
     if (!providerReference || !status) {
       throw new BadRequestException('Invalid webhook payload');
     }
-    // Real provider implementation should map providerReference -> payment record id/reference.
-    // Returning accepted for now keeps integration contract stable while adapters are plugged in.
-    return { accepted: true, providerReference, normalizedStatus: status };
+
+    const payment = await this.paymentsRepo.findOne({
+      where: { bankReference: providerReference },
+    });
+    if (payment) {
+      if (status === 'SUCCESS' || status === 'COMPLETED' || status === 'APPROVED') {
+        payment.status = 'APPROVED';
+      } else if (status === 'FAILED' || status === 'REJECTED') {
+        payment.status = 'REJECTED';
+      }
+      await this.paymentsRepo.save(payment);
+    }
+
+    return {
+      accepted: true,
+      providerReference,
+      normalizedStatus: status,
+      paymentUpdated: !!payment,
+    };
   }
 
   async runReconciliation(accountId: number) {
@@ -322,7 +357,9 @@ export class PaymentsService {
     const payment = await this.findOne(accountId, paymentId);
     payment.status = dto.approve ? (payment.receiptRequested ? 'RECEIPT_REQUESTED' : 'APPROVED') : 'REJECTED';
     payment.landlordNote = dto.landlordNote;
-    return this.paymentsRepo.save(payment);
+    const saved = await this.paymentsRepo.save(payment);
+    this.eventsGateway.emitPaymentUpdate(accountId, saved);
+    return saved;
   }
 
   async submitPurchaseCode(accountId: number, paymentId: number, purchaseCode: string) {
@@ -378,13 +415,14 @@ export class PaymentsService {
     const user = await this.usersRepo.findOne({ where: { id: tenant.userId, accountId } });
     if (!user) return;
 
-    const text = `Invoice ${invoice.billingMonth}: base ${invoice.baseAmountRwf} RWF, VAT ${invoice.vatAmountRwf} RWF, total ${invoice.totalAmountRwf} RWF tax inclusive. Due on ${invoice.dueDate}.`;
-    await this.notificationsService.sendEmail(
-      user.email,
-      `Rent Invoice Reminder ${invoice.billingMonth}`,
-      `${text} Please log in and download the invoice PDF with bank transfer details.`,
-    );
-    await this.notificationsService.sendWhatsapp(tenant.phone, text);
+    const text = `Invoice ${invoice.billingMonth}: base ${invoice.baseAmountRwf} RWF, VAT ${invoice.vatAmountRwf} RWF, total ${invoice.totalAmountRwf} RWF tax inclusive. Due on ${invoice.dueDate}. Please log in and download the invoice PDF with bank transfer details.`;
+    await this.notificationsService.sendRentReminder({
+      accountId,
+      email: user.email,
+      phone: tenant.phone,
+      subject: `Rent Invoice Reminder ${invoice.billingMonth}`,
+      message: text,
+    });
   }
 
   private async createInvoicePdf(invoiceId: number, tenantId: number, account: Account, invoice: Invoice) {

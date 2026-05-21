@@ -58,6 +58,9 @@ export function AuthForm() {
   const [plansPayload, setPlansPayload] = useState<BillingPlansResponse | null>(null);
   const [plansOffline, setPlansOffline] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<string>("professional");
+  const [phone, setPhone] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
     if (mode !== "signup") return;
@@ -189,6 +192,48 @@ export function AuthForm() {
     }
   };
 
+  const requestPhoneOtp = async () => {
+    setError("");
+    setMessage("");
+    setLoading(true);
+    try {
+      const r = await apiRequest<{ success: boolean; devCode?: string }>("/auth/phone/request-otp", {
+        method: "POST",
+        body: JSON.stringify({ phone, purpose: mode === "signup" ? "SIGNUP" : "LOGIN" }),
+      });
+      setOtpSent(true);
+      setMessage(
+        r.devCode ? `Dev OTP: ${r.devCode}` : "Verification code sent via SMS (MTN/Airtel).",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not send code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyPhoneOtp = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const result = await apiRequest<AuthResult>("/auth/phone/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({
+          phone,
+          code: otpCode,
+          accountName: accountName || undefined,
+          selectedPlanId: mode === "signup" ? selectedPlanId : undefined,
+        }),
+      });
+      saveSession(result);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const signInWithMicrosoftToken = async () => {
     setError("");
     setMessage("");
@@ -260,6 +305,33 @@ export function AuthForm() {
             {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
+          <div className="border-t pt-4 space-y-2">
+            <p className="text-sm font-medium text-gray-800">MTN / Airtel phone (Rwanda)</p>
+            <input
+              className="w-full rounded border border-gray-300 p-2"
+              placeholder="0781234567"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            {!otpSent ? (
+              <button type="button" className="w-full rounded border py-2 text-sm" disabled={loading} onClick={requestPhoneOtp}>
+                Send SMS code
+              </button>
+            ) : (
+              <form onSubmit={verifyPhoneOtp} className="space-y-2">
+                <input
+                  className="w-full rounded border border-gray-300 p-2"
+                  placeholder="6-digit code"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  required
+                />
+                <button className="w-full rounded bg-gray-900 text-white py-2 text-sm" disabled={loading}>
+                  Verify & sign in
+                </button>
+              </form>
+            )}
+          </div>
         </div>
       )}
 

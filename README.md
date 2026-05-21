@@ -8,9 +8,10 @@ Property management platform for landlords and platform operators: buildings, le
 
 | Layer | Technology |
 |-------|------------|
-| Backend | NestJS, TypeORM, PostgreSQL |
-| Frontend | Next.js 16, React 19, Tailwind CSS 4 |
-| Staging | Vercel (frontend) + Render (API) + Neon (Postgres) |
+| Backend | NestJS, TypeORM, PostgreSQL, WebSocket, Stripe billing |
+| Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA service worker |
+| Mobile | Expo (React Native) — `mobile/` |
+| Staging | Vercel (frontend) + DigitalOcean/Render (API) + Postgres |
 
 ## Quick start
 
@@ -26,6 +27,8 @@ Open http://localhost:3001
 |-----|---------|
 | [SETUP.md](./SETUP.md) | Local development |
 | [DEPLOY_STAGING.md](./DEPLOY_STAGING.md) | Vercel + Render + Neon staging |
+| [PRODUCTION_DEPLOY.md](./docs/PRODUCTION_DEPLOY.md) | Production env checklist (DO + Vercel) |
+| [mobile/README.md](./mobile/README.md) | iOS / Android app (Expo) |
 | [PARTNER_DEMO.md](./PARTNER_DEMO.md) | Partner preview tunnels |
 | [docs/PARTNER_WALKTHROUGH.md](./docs/PARTNER_WALKTHROUGH.md) | Demo walkthrough script |
 

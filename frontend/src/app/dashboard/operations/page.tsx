@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
-import { apiRequest, API_BASE_URL } from "@/lib/api";
+import { apiRequest, API_BASE_URL, apiUpload } from "@/lib/api";
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
 import { useSession } from "@/components/dashboard/use-session";
 import { StatusBanner } from "@/components/dashboard/status-banner";
@@ -12,6 +12,7 @@ export default function OperationsPage() {
   const { token, user } = useSession();
   const [trend, setTrend] = useState<Trend[]>([]);
   const [message, setMessage] = useState("");
+  const [statementFile, setStatementFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!user || user.role === "TENANT") {
@@ -29,10 +30,19 @@ export default function OperationsPage() {
     setMessage(`Reminder batch: ${r.createdCount} invoices created.`);
   };
 
-  const runReconciliation = async () => {
-    if (!token) return;
-    const r = await apiRequest<{ scanned: number }>("/payments/reconciliation/run", { method: "POST" }, token);
-    setMessage(`Reconciliation scanned ${r.scanned} pending payments.`);
+  const uploadBankStatement = async () => {
+    if (!token || !statementFile) return;
+    const fd = new FormData();
+    fd.append("file", statementFile);
+    const r = await apiUpload<{
+      lineCount?: number;
+      suggestedMatches?: number;
+      autoConfirmed?: number;
+    }>("/reconciliation/statements/upload", fd, token);
+    setMessage(
+      `Statement uploaded: ${r.lineCount ?? 0} lines, ${r.suggestedMatches ?? 0} suggested, ${r.autoConfirmed ?? 0} auto-confirmed.`,
+    );
+    setStatementFile(null);
   };
 
   if (!user) return null;
@@ -48,8 +58,19 @@ export default function OperationsPage() {
             <button type="button" className="rounded bg-gray-900 text-white px-4 py-2 text-sm" onClick={runReminders}>
               Run rent reminder batch
             </button>
-            <button type="button" className="rounded border px-4 py-2 text-sm" onClick={runReconciliation}>
-              Run payment reconciliation
+            <input
+              type="file"
+              accept=".pdf,.csv,.txt"
+              className="text-sm"
+              onChange={(e) => setStatementFile(e.target.files?.[0] ?? null)}
+            />
+            <button
+              type="button"
+              className="rounded border px-4 py-2 text-sm"
+              disabled={!statementFile}
+              onClick={uploadBankStatement}
+            >
+              Upload bank statement & match
             </button>
             <a className="rounded border px-4 py-2 text-sm" href={`${API_BASE_URL}/payments/rent-reminders/upcoming`} target="_blank" rel="noreferrer">
               Upcoming reminders

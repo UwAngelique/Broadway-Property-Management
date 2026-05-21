@@ -60,6 +60,18 @@ export class Account {
   @Column({ type: 'varchar', length: 40, nullable: true })
   subscriptionPlanId?: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  stripeCustomerId?: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  stripeSubscriptionId?: string | null;
+
+  @Column({ type: 'varchar', length: 30, default: 'inactive' })
+  subscriptionStatus: 'inactive' | 'active' | 'past_due' | 'canceled' | 'trialing';
+
+  @Column({ type: 'timestamp', nullable: true })
+  subscriptionCurrentPeriodEnd?: Date | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

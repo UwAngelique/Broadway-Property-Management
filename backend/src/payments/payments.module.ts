@@ -14,15 +14,16 @@ import { TenantProfile } from '../tenants/tenant-profile.entity';
 import { User } from '../tenants/user.entity';
 import { Account } from '../accounts/account.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { PaymentsScheduler } from './payments.scheduler';
-
+import { RealtimeModule } from '../realtime/realtime.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Payment, PaymentSettings, Contract, ContractVersion, Invoice, TenantProfile, User, Account]),
     AuditModule,
     NotificationsModule,
+    RealtimeModule,
   ],
-  providers: [PaymentsService, PaymentGatewayService, PaymentsScheduler, RolesGuard],
+  providers: [PaymentsService, PaymentGatewayService, RolesGuard],
   controllers: [PaymentsController],
+  exports: [PaymentsService],
 })
 export class PaymentsModule {}

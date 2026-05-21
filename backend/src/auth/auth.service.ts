@@ -7,6 +7,9 @@ import { Repository } from 'typeorm';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { randomBytes } from 'crypto';
 import { User } from '../tenants/user.entity';
+import { OtpVerification } from './entities/otp-verification.entity';
+import { PhoneRequestOtpDto } from './dto/phone-request-otp.dto';
+import { PhoneVerifyOtpDto } from './dto/phone-verify-otp.dto';
 import { AccountsService } from '../accounts/accounts.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { SignupDto } from './dto/signup.dto';
@@ -25,6 +28,8 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+    @InjectRepository(OtpVerification)
+    private readonly otpRepo: Repository<OtpVerification>,
     private readonly accountsService: AccountsService,
     private readonly jwtService: JwtService,
     private readonly notificationsService: NotificationsService,
@@ -174,6 +179,90 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
+  async requestPhoneOtp(dto: PhoneRequestOtpDto) {
+    const phone = this.notificationsService.normalizeRwandaPhone(dto.phone);
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const codeHash = await hash(code, 10);
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+
+    await this.otpRepo.save(
+      this.otpRepo.create({
+        phone,
+        codeHash,
+        purpose: dto.purpose ?? 'LOGIN',
+        expiresAt,
+      }),
+    );
+
+    const network = this.notificationsService.detectMobileNetwork(phone);
+    const message = `Broadway PM verification code: ${code}. Valid 10 minutes. Do not share.`;
+    const sms = await this.notificationsService.sendSms(phone, message);
+
+    if (process.env.NODE_ENV !== 'production') {
+      return { success: true, phone, network, sms, devCode: code };
+    }
+    return { success: true, phone, network, sms };
+  }
+
+  async verifyPhoneOtp(dto: PhoneVerifyOtpDto) {
+    const phone = this.notificationsService.normalizeRwandaPhone(dto.phone);
+    const records = await this.otpRepo.find({
+      where: { phone, verified: false },
+      order: { id: 'DESC' },
+      take: 5,
+    });
+
+    const now = new Date();
+    let matched: OtpVerification | null = null;
+    for (const rec of records) {
+      if (rec.expiresAt < now) continue;
+      if (rec.attempts >= 5) continue;
+      const ok = await compare(dto.code, rec.codeHash);
+      rec.attempts += 1;
+      await this.otpRepo.save(rec);
+      if (ok) {
+        matched = rec;
+        break;
+      }
+    }
+
+    if (!matched) {
+      throw new UnauthorizedException('Invalid or expired verification code');
+    }
+    matched.verified = true;
+    await this.otpRepo.save(matched);
+
+    const network = this.notificationsService.detectMobileNetwork(phone);
+    let user = await this.usersRepo.findOne({ where: { phone } });
+    if (!user) {
+      const accountId = await this.resolveAccountId(undefined, dto.accountName, `${phone}@phone.broadway`);
+      if (dto.selectedPlanId) {
+        await this.accountsService.setSubscriptionPlan(accountId, dto.selectedPlanId);
+      }
+      user = this.usersRepo.create({
+        phone,
+        phoneVerified: true,
+        mobileNetwork: network,
+        email: `${phone.replace('+', '')}@phone.broadway`,
+        role: 'TENANT',
+        language: 'EN',
+        isActive: true,
+        accountId,
+        authProvider: 'PHONE',
+      });
+      user = await this.usersRepo.save(user);
+    } else {
+      user.phoneVerified = true;
+      user.mobileNetwork = network;
+      user.authProvider = 'PHONE';
+      user = await this.usersRepo.save(user);
+    }
+
+    await this.assertUserMayAuthenticate(user);
+    return this.buildAuthResponse(user);
+  }
+
   async refresh(refreshToken: string) {
     let payload: JwtUserPayload;
     try {
@@ -224,7 +313,7 @@ export class AuthService {
 
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       await this.notificationsService.sendEmail(
-        user.email,
+        user.email ?? '',
         'Broadway Property Management — password reset',
         `Use this link within 30 minutes to reset your password:\n\n${resetLink}\n\nIf you did not request this, ignore this email.`,
       );
@@ -299,20 +388,32 @@ export class AuthService {
     }
   }
 
+  private getJwtSecrets() {
+    const secret = process.env.JWT_SECRET ?? 'dev-secret-change-me';
+    const refresh = process.env.JWT_REFRESH_SECRET ?? secret;
+    if (process.env.NODE_ENV === 'production') {
+      if (secret.length < 32 || secret.includes('dev-secret')) {
+        throw new Error('JWT_SECRET must be configured for production');
+      }
+    }
+    return { secret, refresh };
+  }
+
   private async buildAuthResponse(user: User) {
     const account = user.accountId ? await this.accountsService.findOne(user.accountId) : null;
+    const { secret, refresh } = this.getJwtSecrets();
     const jwtPayload: JwtUserPayload = {
       sub: user.id,
-      email: user.email,
+      email: user.email ?? user.phone ?? '',
       role: user.role,
       accountId: user.accountId,
     };
     const accessToken = this.jwtService.sign(jwtPayload, {
-      secret: process.env.JWT_SECRET ?? 'dev-secret-change-me',
+      secret,
       expiresIn: '15m',
     });
     const refreshToken = this.jwtService.sign(jwtPayload, {
-      secret: process.env.JWT_REFRESH_SECRET ?? process.env.JWT_SECRET ?? 'dev-secret-change-me',
+      secret: refresh,
       expiresIn: '30d',
     });
     await this.storeRefreshToken(user.id, refreshToken);
@@ -322,6 +423,8 @@ export class AuthService {
       user: {
         id: user.id,
         email: user.email,
+        phone: user.phone,
+        mobileNetwork: user.mobileNetwork,
         role: user.role,
         language: user.language,
         accountId: user.accountId,
@@ -330,6 +433,7 @@ export class AuthService {
         accountActivationStatus: account?.activationStatus,
         parentAccountId: account?.parentAccountId,
         subscriptionPlanId: account?.subscriptionPlanId,
+        subscriptionStatus: account?.subscriptionStatus,
       },
     };
   }
