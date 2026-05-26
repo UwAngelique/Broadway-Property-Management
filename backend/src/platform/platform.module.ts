@@ -10,10 +10,12 @@ import { ComplianceModule } from '../compliance/compliance.module';
 import { AccountsModule } from '../accounts/accounts.module';
 import { AuditModule } from '../audit/audit.module';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { Payment } from '../payments/payment.entity';
+import { Invoice } from '../invoices/invoice.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Account, User, AuditEvent]),
+    TypeOrmModule.forFeature([Account, User, AuditEvent, Payment, Invoice]),
     AnalyticsModule,
     ComplianceModule,
     AccountsModule,

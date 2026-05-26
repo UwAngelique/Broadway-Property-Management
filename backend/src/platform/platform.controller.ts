@@ -26,6 +26,18 @@ export class PlatformController {
     return this.platformService.getOverview(user.accountId);
   }
 
+  @Get('finance')
+  @Roles('PLATFORM_OWNER')
+  finance(@CurrentUser() user: JwtUserPayload) {
+    return this.platformService.getFinanceRollup(user.accountId);
+  }
+
+  @Get('tax')
+  @Roles('PLATFORM_OWNER')
+  tax(@CurrentUser() user: JwtUserPayload) {
+    return this.platformService.getTaxRollup(user.accountId);
+  }
+
   @Post('clients/workspace')
   @Roles('PLATFORM_OWNER')
   async createClientWorkspace(

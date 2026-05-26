@@ -22,8 +22,12 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!token || !user) return;
-    if (user.role === "TENANT" || user.role === "PLATFORM_OWNER") {
+    if (user.role === "TENANT") {
       window.location.href = "/dashboard";
+      return;
+    }
+    if (user.role === "PLATFORM_OWNER") {
+      setSettings(null);
       return;
     }
     apiRequest<PaymentSettings>("/payments/settings", {}, token)
@@ -47,6 +51,15 @@ export default function SettingsPage() {
     <DashboardPage title="Settings">
       <StatusBanner message={message} error={error} />
 
+      {user.role === "PLATFORM_OWNER" ? (
+        <section className="bg-white rounded-xl border p-4 mb-4 space-y-2 text-sm">
+          <h2 className="font-semibold">Platform operator</h2>
+          <p className="text-gray-600">
+            Manage landlord clients from the <Link href="/dashboard/clients" className="text-blue-700 underline">Clients</Link> page.
+            Payment method toggles are configured per landlord workspace.
+          </p>
+        </section>
+      ) : (
       <section className="bg-white rounded-xl border p-4 mb-4 space-y-3">
         <h2 className="font-semibold">Manual payment methods (pilot)</h2>
         <p className="text-sm text-gray-600">
@@ -83,7 +96,9 @@ export default function SettingsPage() {
           <p className="text-gray-500 text-sm">Loading…</p>
         )}
       </section>
+      )}
 
+      {user.role !== "PLATFORM_OWNER" ? (
       <section className="bg-white rounded-xl border p-4 mb-4 space-y-2 text-sm">
         <h2 className="font-semibold">Team & workspace</h2>
         {user.role === "OWNER" ? (
@@ -101,6 +116,7 @@ export default function SettingsPage() {
           </Link>
         </p>
       </section>
+      ) : null}
 
       {user.role === "OWNER" ? (
         <section className="bg-white rounded-xl border p-4 mb-4 space-y-3 text-sm">

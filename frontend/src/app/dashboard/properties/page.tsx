@@ -149,8 +149,8 @@ export default function PropertiesPage() {
           <article key={b.id} className="bg-white rounded-xl border p-4">
             <h3 className="font-semibold text-gray-900">{b.name}</h3>
             <p className="text-sm text-gray-600">
-              {b.propertyKind} Â· {b.usageType}
-              {b.upi ? ` Â· UPI ${b.upi}` : ""}
+              {b.propertyKind} · {b.usageType}
+              {b.upi ? ` · UPI ${b.upi}` : ""}
             </p>
             <ul className="mt-3 text-sm space-y-1">
               {units

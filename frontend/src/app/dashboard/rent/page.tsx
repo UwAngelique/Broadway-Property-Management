@@ -128,7 +128,7 @@ export default function RentPage() {
           {payments.map((p) => (
             <div key={p.id} className="border rounded p-2 mb-2 text-sm">
               <p>
-                #{p.id} {p.method} Â· {fmtRwf(Number(p.amountRwf))}
+                #{p.id} {p.method} · {fmtRwf(Number(p.amountRwf))}
               </p>
               <p className="text-gray-600">{p.status}</p>
               {p.bankReference ? <p className="text-gray-700">{p.bankReference}</p> : null}

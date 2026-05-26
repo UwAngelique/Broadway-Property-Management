@@ -94,7 +94,7 @@ export default function UnitsPage() {
             {units.map((u) => (
               <tr key={u.id} className="border-b">
                 <td className="p-3 font-medium">{u.unitName}</td>
-                <td className="p-3">{u.floor ?? "â€”"}</td>
+                <td className="p-3">{u.floor ?? "—"}</td>
                 <td className="p-3">{buildings.find((b) => b.id === u.buildingId)?.name ?? `#${u.buildingId}`}</td>
               </tr>
             ))}

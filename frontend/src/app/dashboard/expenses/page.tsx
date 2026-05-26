@@ -80,7 +80,7 @@ export default function ExpensesPage() {
         {items.map((e) => (
           <div key={e.id} className="p-4 flex justify-between text-sm">
             <span>
-              {e.category} â€” {e.description}
+              {e.category} — {e.description}
             </span>
             <span>{fmtRwf(Number(e.amountRwf))}</span>
           </div>

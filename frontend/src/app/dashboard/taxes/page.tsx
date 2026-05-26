@@ -19,6 +19,7 @@ type TaxObligation = {
   dueDate?: string;
   amountDueRwf?: string;
   status: string;
+  clientName?: string;
 };
 
 export default function TaxesPage() {
@@ -39,8 +40,20 @@ export default function TaxesPage() {
 
   const canEdit = user && ["OWNER", "ACCOUNTANT"].includes(user.role);
 
+  const isPlatform = user?.role === "PLATFORM_OWNER";
+
   const load = async () => {
-    if (!token) return;
+    if (!token || !user) return;
+    if (isPlatform) {
+      const rollup = await apiRequest<{
+        summary: ComplianceSummary;
+        obligations: TaxObligation[];
+        clientCount: number;
+      }>("/platform/tax", {}, token);
+      setSummary(rollup.summary);
+      setObligations(rollup.obligations);
+      return;
+    }
     const [s, p, o] = await Promise.all([
       apiRequest<ComplianceSummary>("/compliance/summary", {}, token),
       apiRequest<TaxProfile>("/compliance/profile", {}, token),
@@ -84,7 +97,11 @@ export default function TaxesPage() {
 
   return (
     <DashboardPage title={`Tax · ${open} open`}>
-      <TrustBanner />
+      {isPlatform ? (
+        <p className="text-sm text-gray-600 mb-4">Combined tax obligations across all landlord clients (read-only).</p>
+      ) : (
+        <TrustBanner />
+      )}
       <StatusBanner message={message} error={error} />
 
       {summary ? (
@@ -127,15 +144,18 @@ export default function TaxesPage() {
 
       <div className="flex justify-between items-center mb-3">
         <h2 className="font-semibold text-gray-900">Obligations ({obligations.length})</h2>
-        <button type="button" className="text-sm rounded bg-gray-900 text-white px-3 py-1.5" onClick={downloadPdf}>
-          Export PDF
-        </button>
+        {!isPlatform ? (
+          <button type="button" className="text-sm rounded bg-gray-900 text-white px-3 py-1.5" onClick={downloadPdf}>
+            Export PDF
+          </button>
+        ) : null}
       </div>
 
       <section className="bg-white rounded-xl border overflow-x-auto">
         <table className="min-w-full text-sm text-left">
           <thead className="bg-gray-50 border-b">
             <tr>
+              {isPlatform ? <th className="p-3">Client</th> : null}
               <th className="p-3">Type</th>
               <th className="p-3">Title</th>
               <th className="p-3">Due</th>
@@ -145,11 +165,12 @@ export default function TaxesPage() {
           </thead>
           <tbody>
             {obligations.map((o) => (
-              <tr key={o.id} className="border-b">
+              <tr key={`${o.id}-${o.clientName ?? ""}`} className="border-b">
+                {isPlatform ? <td className="p-3">{o.clientName ?? "—"}</td> : null}
                 <td className="p-3">{o.taxType}</td>
                 <td className="p-3">{o.title}</td>
-                <td className="p-3">{o.dueDate ?? "â€”"}</td>
-                <td className="p-3">{o.amountDueRwf ?? "â€”"}</td>
+                <td className="p-3">{o.dueDate ?? "—"}</td>
+                <td className="p-3">{o.amountDueRwf ?? "—"}</td>
                 <td className="p-3">{o.status}</td>
               </tr>
             ))}

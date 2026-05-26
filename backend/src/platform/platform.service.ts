@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { In, MoreThan, Repository } from 'typeorm';
+import { Payment } from '../payments/payment.entity';
+import { Invoice } from '../invoices/invoice.entity';
 import { Account } from '../accounts/account.entity';
 import { User } from '../tenants/user.entity';
 import { AuditEvent } from '../audit/audit-event.entity';
@@ -17,6 +19,10 @@ export class PlatformService {
     private readonly usersRepo: Repository<User>,
     @InjectRepository(AuditEvent)
     private readonly auditRepo: Repository<AuditEvent>,
+    @InjectRepository(Payment)
+    private readonly paymentsRepo: Repository<Payment>,
+    @InjectRepository(Invoice)
+    private readonly invoicesRepo: Repository<Invoice>,
     private readonly analyticsService: AnalyticsService,
     private readonly complianceService: ComplianceService,
     private readonly accountsService: AccountsService,
@@ -106,6 +112,73 @@ export class PlatformService {
           : 0,
       },
       clients: clientRows,
+    };
+  }
+
+  async getFinanceRollup(platformAccountId: number) {
+    const clients = await this.accountsService.listLandlordChildren(platformAccountId);
+    const clientIds = clients.map((c) => c.id);
+    const nameById = new Map(clients.map((c) => [c.id, c.name]));
+
+    if (!clientIds.length) {
+      return { payments: [], invoices: [], clientCount: 0 };
+    }
+
+    const [payments, invoices] = await Promise.all([
+      this.paymentsRepo.find({
+        where: { accountId: In(clientIds) },
+        order: { id: 'DESC' },
+        take: 300,
+      }),
+      this.invoicesRepo.find({
+        where: { accountId: In(clientIds) },
+        order: { id: 'DESC' },
+        take: 300,
+      }),
+    ]);
+
+    return {
+      clientCount: clients.length,
+      payments: payments.map((p) => ({
+        ...p,
+        clientName: nameById.get(p.accountId ?? 0) ?? 'Client',
+      })),
+      invoices: invoices.map((inv) => ({
+        ...inv,
+        clientName: nameById.get(inv.accountId ?? 0) ?? 'Client',
+      })),
+    };
+  }
+
+  async getTaxRollup(platformAccountId: number) {
+    const clients = await this.accountsService.listLandlordChildren(platformAccountId);
+    const obligations = (
+      await Promise.all(
+        clients.map(async (c) => {
+          const rows = await this.complianceService.listObligations(c.id);
+          return rows.map((o) => ({
+            ...o,
+            clientAccountId: c.id,
+            clientName: c.name,
+          }));
+        }),
+      )
+    ).flat();
+
+    const openObligationCount = obligations.filter((o) => o.status !== 'PAID').length;
+    const totalTrackedDueRwf = obligations.reduce(
+      (sum, o) => sum + Number(o.amountDueRwf ?? 0),
+      0,
+    );
+
+    return {
+      clientCount: clients.length,
+      summary: {
+        obligationCount: obligations.length,
+        openObligationCount,
+        totalTrackedDueRwf,
+      },
+      obligations,
     };
   }
 }

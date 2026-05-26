@@ -372,7 +372,7 @@ export function AuthForm() {
                     {plan.features.slice(0, 6).map((f, i) => (
                       <li key={`${plan.id}-${i}`}>{f}</li>
                     ))}
-                    {plan.features.length > 6 ? <li>â€¦and more in this tier</li> : null}
+                    {plan.features.length > 6 ? <li>…and more in this tier</li> : null}
                   </ul>
                   <div className="text-[11px] text-gray-500 border-t pt-2 mt-auto">
                     {plan.limits.map((l) => (
@@ -416,7 +416,7 @@ export function AuthForm() {
               required
             />
             <p className="text-xs text-gray-600">
-              Selected plan: <span className="font-medium text-gray-900">{selectedPlanId}</span> â€” stored on your account for billing
+              Selected plan: <span className="font-medium text-gray-900">{selectedPlanId}</span> — stored on your account for billing
               follow-up.
             </p>
             <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>

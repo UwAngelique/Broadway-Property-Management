@@ -60,7 +60,7 @@ export default function FinancePage() {
   if (!user) return null;
 
   return (
-    <DashboardShell user={user} title={`Finance Â· ${pending.length} pending review`}>
+    <DashboardShell user={user} title={`Finance · ${pending.length} pending review`}>
       <StatusBanner message={message} error={error} />
 
       <p className="text-sm text-gray-600 mb-4 bg-amber-50 border border-amber-100 rounded-lg p-3">
@@ -75,7 +75,7 @@ export default function FinancePage() {
             <div key={p.id} className="border rounded-lg p-3 flex flex-col sm:flex-row sm:justify-between gap-2 text-sm">
               <div>
                 <p className="font-medium text-gray-900">
-                  #{p.id} Â· {p.method} Â· {fmtRwf(Number(p.amountRwf))}
+                  #{p.id} · {p.method} · {fmtRwf(Number(p.amountRwf))}
                 </p>
                 <p className="text-gray-600">Tenant #{p.tenantId} Â· {new Date(p.createdAt).toLocaleString()}</p>
                 {p.bankReference ? <p className="text-gray-700 mt-1">Ref: {p.bankReference}</p> : null}
@@ -103,7 +103,7 @@ export default function FinancePage() {
             {invoices.map((inv) => (
               <div key={inv.id} className="flex justify-between border rounded p-2 text-sm">
                 <span>
-                  {inv.billingMonth} Â· due {inv.dueDate}
+                  {inv.billingMonth} · due {inv.dueDate}
                 </span>
                 <span>
                   {fmtRwf(Number(inv.totalAmountRwf))}{" "}
@@ -125,7 +125,7 @@ export default function FinancePage() {
                   #{p.id} {p.method}
                 </span>
                 <span>
-                  {fmtRwf(Number(p.amountRwf))} Â· {p.status}
+                  {fmtRwf(Number(p.amountRwf))} · {p.status}
                 </span>
               </div>
             ))}
