@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { useSession } from "@/components/dashboard/use-session";
+import { SessionProvider, useSession } from "@/components/dashboard/use-session";
 import { RealtimeProvider } from "@/components/realtime-provider";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { ready } = useSession();
   if (!ready) {
     return (
@@ -15,3 +15,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return <RealtimeProvider>{children}</RealtimeProvider>;
 }
 
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <SessionProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </SessionProvider>
+  );
+}

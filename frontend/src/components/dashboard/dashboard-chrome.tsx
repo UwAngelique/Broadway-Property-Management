@@ -29,7 +29,10 @@ export function DashboardChrome({
         </div>
         <nav className="p-2 flex md:flex-col gap-1 overflow-x-auto">
           {nav.map((item) => {
-            const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            const active =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href || pathname.startsWith(item.href + "/");
             return (
               <Link
                 key={item.href}

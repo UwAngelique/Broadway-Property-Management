@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
 import { DashboardPage } from "@/components/dashboard/dashboard-page";
 import { useSession } from "@/components/dashboard/use-session";
 
@@ -13,11 +14,16 @@ const steps = [
 ];
 
 export default function OnboardingPage() {
-  const { user } = useSession();
-  if (!user || user.role !== "OWNER") {
-    if (typeof window !== "undefined") window.location.href = "/dashboard";
-    return null;
-  }
+  const { user, ready } = useSession();
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!user || user.role !== "OWNER") {
+      window.location.href = "/dashboard";
+    }
+  }, [user, ready]);
+
+  if (!ready || !user || user.role !== "OWNER") return null;
 
   return (
     <DashboardPage title="Setup guide">
