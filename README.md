@@ -33,6 +33,7 @@ Open http://localhost:3001
 | [AUTH_SETUP.md](./docs/AUTH_SETUP.md) | Google, Microsoft, email, phone OTP setup |
 | [PRODUCTION_DEPLOY.md](./docs/PRODUCTION_DEPLOY.md) | Alt: DigitalOcean + Vercel checklist |
 | [mobile/README.md](./mobile/README.md) | iOS / Android app (Expo) |
+| [APP_STORE_RELEASE.md](./docs/APP_STORE_RELEASE.md) | App Store & Google Play submission |
 | [PARTNER_DEMO.md](./PARTNER_DEMO.md) | Partner preview tunnels |
 | [docs/PARTNER_WALKTHROUGH.md](./docs/PARTNER_WALKTHROUGH.md) | Demo walkthrough script |
 

@@ -1,29 +1,43 @@
-# Broadway PM — Mobile (Expo)
+# Broadway PM — Mobile (iOS & Android)
 
-React Native app for **iOS App Store** and **Google Play**, sharing the same API and WebSocket events as the web app.
+Expo app for **App Store** and **Google Play**, using the same API as [broadwaycreation.rw](http://broadwaycreation.rw).
 
-## Setup
+## Quick start
 
 ```bash
 cd mobile
+cp .env.example .env
 npm install
-```
-
-Set API URL in `app.json` → `extra.apiUrl` or:
-
-```bash
-set EXPO_PUBLIC_API_URL=https://your-api.ondigitalocean.app
-```
-
-## Run
-
-```bash
+npm run generate-assets
 npm start
 ```
 
-## Store release (after production API is live)
+## Store release
 
-1. Add `assets/icon.png`, `splash.png`, `adaptive-icon.png` (1024×1024 icon).
-2. `eas build --platform all` (Expo Application Services).
-3. Submit to App Store Connect and Google Play Console.
-4. Privacy policy URL must match web `/legal/privacy`.
+Full checklist: **[docs/APP_STORE_RELEASE.md](../docs/APP_STORE_RELEASE.md)**
+
+```bash
+npm install -g eas-cli
+eas login
+cd mobile
+eas init
+eas build --platform all --profile production
+eas submit --platform all --profile production --latest
+```
+
+Listing copy: [store/PLAY_STORE_LISTING.md](../store/PLAY_STORE_LISTING.md)
+
+## Configuration
+
+| Variable | Purpose |
+|----------|---------|
+| `EXPO_PUBLIC_API_URL` | API base including `/api` |
+| `EXPO_PUBLIC_PRIVACY_URL` | Privacy policy (store requirement) |
+| `EAS_PROJECT_ID` | From `eas init` |
+
+Production defaults point to `http://broadwaycreation.rw/api` until HTTPS is enabled.
+
+## Bundle identifiers
+
+- iOS: `rw.broadwaycreation.pm`
+- Android: `rw.broadwaycreation.pm`
