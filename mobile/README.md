@@ -12,9 +12,19 @@ npm run generate-assets
 npm start
 ```
 
-## Store release
+## App icon
 
-Full checklist: **[docs/APP_STORE_RELEASE.md](../docs/APP_STORE_RELEASE.md)**
+Uses the same logo as the website (`frontend/public/broadway-logo.png`):
+
+```bash
+npm run generate-assets
+```
+
+## Store release (users can download)
+
+**Start here:** **[docs/GET_APP_ON_STORES.md](../docs/GET_APP_ON_STORES.md)** — step-by-step App Store & Google Play.
+
+Technical detail: **[docs/APP_STORE_RELEASE.md](../docs/APP_STORE_RELEASE.md)**
 
 ```bash
 npm install -g eas-cli

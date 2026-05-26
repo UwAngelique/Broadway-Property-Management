@@ -1,40 +1,64 @@
 /**
- * Generates App Store / Play Store icons and splash (pure Node, no native deps).
+ * Builds App Store / Play Store icons and splash from the same logo as the website.
+ * Source: frontend/public/broadway-logo.png
  * Run: npm run generate-assets
  */
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { PNG } from "pngjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const assetsDir = path.join(__dirname, "..", "assets");
+const logoPath = path.join(__dirname, "..", "..", "frontend", "public", "broadway-logo.png");
+
 fs.mkdirSync(assetsDir, { recursive: true });
 
-function fillPng(width, height, rgb) {
-  const png = new PNG({ width, height });
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const i = (width * y + x) << 2;
-      const band = y < height * 0.35 ? [30, 58, 95] : rgb;
-      png.data[i] = band[0];
-      png.data[i + 1] = band[1];
-      png.data[i + 2] = band[2];
-      png.data[i + 3] = 255;
-      if (x > width * 0.1 && x < width * 0.9 && y > height * 0.25 && y < height * 0.75) {
-        png.data[i] = 51;
-        png.data[i + 1] = 65;
-        png.data[i + 2] = 85;
-      }
-    }
-  }
-  return PNG.sync.write(png);
+if (!fs.existsSync(logoPath)) {
+  console.error(`Logo not found: ${logoPath}`);
+  console.error("Ensure frontend/public/broadway-logo.png exists.");
+  process.exit(1);
 }
 
-const icon = fillPng(1024, 1024, [15, 23, 42]);
-const splash = fillPng(1284, 2778, [15, 23, 42]);
+const sharp = (await import("sharp")).default;
 
+const bg = { r: 15, g: 23, b: 42, alpha: 1 };
+
+async function iconWithLogo(size) {
+  const logo = await sharp(logoPath)
+    .resize(Math.round(size * 0.82), Math.round(size * 0.82), { fit: "inside", background: bg })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: { width: size, height: size, channels: 4, background: bg },
+  })
+    .composite([{ input: logo, gravity: "center" }])
+    .png()
+    .toBuffer();
+}
+
+async function splashWithLogo() {
+  const w = 1284;
+  const h = 2778;
+  const logo = await sharp(logoPath)
+    .resize(Math.round(w * 0.55), Math.round(h * 0.22), { fit: "inside", background: bg })
+    .png()
+    .toBuffer();
+
+  return sharp({
+    create: { width: w, height: h, channels: 4, background: bg },
+  })
+    .composite([{ input: logo, gravity: "center" }])
+    .png()
+    .toBuffer();
+}
+
+const icon = await iconWithLogo(1024);
 fs.writeFileSync(path.join(assetsDir, "icon.png"), icon);
 fs.writeFileSync(path.join(assetsDir, "adaptive-icon.png"), icon);
-fs.writeFileSync(path.join(assetsDir, "splash.png"), splash);
-console.log("Generated assets/icon.png, adaptive-icon.png, splash.png");
+fs.writeFileSync(path.join(assetsDir, "splash.png"), await splashWithLogo());
+
+console.log("Generated from Broadway Creation logo:");
+console.log("  assets/icon.png (1024×1024)");
+console.log("  assets/adaptive-icon.png");
+console.log("  assets/splash.png");
