@@ -11,7 +11,8 @@ Property management platform for landlords and platform operators: buildings, le
 | Backend | NestJS, TypeORM, PostgreSQL, WebSocket, Stripe billing |
 | Frontend | Next.js 16, React 19, Tailwind CSS 4, PWA service worker |
 | Mobile | Expo (React Native) — `mobile/` |
-| Staging | Vercel (frontend) + DigitalOcean/Render (API) + Postgres |
+| **Production** | **AOS Ltd VPS** (`broadwaycreation.rw`) — nginx + PM2 + Postgres — see [HOSTING_AOS.md](./docs/HOSTING_AOS.md) |
+| Staging (optional) | Vercel + Render/DO — see [DEPLOY_STAGING.md](./DEPLOY_STAGING.md) |
 
 ## Quick start
 
@@ -27,7 +28,9 @@ Open http://localhost:3001
 |-----|---------|
 | [SETUP.md](./SETUP.md) | Local development |
 | [DEPLOY_STAGING.md](./DEPLOY_STAGING.md) | Vercel + Render + Neon staging |
-| [PRODUCTION_DEPLOY.md](./docs/PRODUCTION_DEPLOY.md) | Production env checklist (DO + Vercel) |
+| [HOSTING_AOS.md](./docs/HOSTING_AOS.md) | Where `broadwaycreation.rw` is hosted (detected) |
+| [DEPLOY_AOS_PRODUCTION.md](./docs/DEPLOY_AOS_PRODUCTION.md) | AOS VPS deploy + GitHub Actions auto-deploy |
+| [PRODUCTION_DEPLOY.md](./docs/PRODUCTION_DEPLOY.md) | Alt: DigitalOcean + Vercel checklist |
 | [mobile/README.md](./mobile/README.md) | iOS / Android app (Expo) |
 | [PARTNER_DEMO.md](./PARTNER_DEMO.md) | Partner preview tunnels |
 | [docs/PARTNER_WALKTHROUGH.md](./docs/PARTNER_WALKTHROUGH.md) | Demo walkthrough script |
