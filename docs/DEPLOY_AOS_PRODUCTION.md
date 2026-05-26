@@ -68,6 +68,10 @@ sudo ln -sf /etc/nginx/sites-available/broadwaycreation.rw /etc/nginx/sites-enab
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
+### OAuth (Google / Microsoft)
+
+Committed defaults live in `deploy/env/oauth.production.env`. Each deploy runs `scripts/deploy/sync-oauth-env.sh` to update `backend/.env` and `frontend/.env.production`. See [AUTH_SETUP.md](./AUTH_SETUP.md).
+
 ### First deploy
 
 ```bash

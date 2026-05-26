@@ -30,6 +30,7 @@ Open http://localhost:3001
 | [DEPLOY_STAGING.md](./DEPLOY_STAGING.md) | Vercel + Render + Neon staging |
 | [HOSTING_AOS.md](./docs/HOSTING_AOS.md) | Where `broadwaycreation.rw` is hosted (detected) |
 | [DEPLOY_AOS_PRODUCTION.md](./docs/DEPLOY_AOS_PRODUCTION.md) | AOS VPS deploy + GitHub Actions auto-deploy |
+| [AUTH_SETUP.md](./docs/AUTH_SETUP.md) | Google, Microsoft, email, phone OTP setup |
 | [PRODUCTION_DEPLOY.md](./docs/PRODUCTION_DEPLOY.md) | Alt: DigitalOcean + Vercel checklist |
 | [mobile/README.md](./mobile/README.md) | iOS / Android app (Expo) |
 | [PARTNER_DEMO.md](./PARTNER_DEMO.md) | Partner preview tunnels |

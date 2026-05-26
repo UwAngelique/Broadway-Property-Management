@@ -28,6 +28,10 @@ if [[ ! -f backend/.env ]]; then
   exit 1
 fi
 
+if [[ -f scripts/deploy/sync-oauth-env.sh ]]; then
+  bash scripts/deploy/sync-oauth-env.sh "$APP_DIR"
+fi
+
 log "Building API..."
 cd backend
 npm ci

@@ -67,10 +67,5 @@ export function GoogleSignInButton({ onSuccess, onError }: Props) {
 
   if (!clientId) return null;
 
-  return (
-    <div className="space-y-2">
-      <p className="text-xs text-gray-500 text-center">Sign in with Google (requires GOOGLE_CLIENT_ID in env)</p>
-      <div ref={ref} className="flex justify-center" />
-    </div>
-  );
+  return <div ref={ref} className="flex justify-center min-h-[44px]" />;
 }

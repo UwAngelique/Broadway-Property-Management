@@ -1,4 +1,6 @@
-# Copy to frontend/.env.production on the AOS server (not committed)
+# Copy to frontend/.env.production on the AOS server (deploy syncs OAuth keys automatically)
 NEXT_PUBLIC_API_BASE_URL=/api
 API_PROXY_TARGET=http://127.0.0.1:3000
 NEXT_PUBLIC_WS_URL=
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=428424757298-bqrqu00qb40e53mibpkfi5m6i1l1io7o.apps.googleusercontent.com
+# NEXT_PUBLIC_MICROSOFT_CLIENT_ID=<Azure application client id>

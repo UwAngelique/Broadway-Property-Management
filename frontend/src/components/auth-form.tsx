@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { apiRequest } from "@/lib/api";
 import Image from "next/image";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
+import { MicrosoftSignInButton } from "@/components/auth/microsoft-sign-in-button";
 import { FALLBACK_PLANS_RESPONSE } from "@/lib/fallback-plans";
 
 type AuthResult = {
@@ -48,8 +49,6 @@ export function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accountName, setAccountName] = useState("");
-  const [googleToken, setGoogleToken] = useState("");
-  const [microsoftToken, setMicrosoftToken] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -81,6 +80,16 @@ export function AuthForm() {
         setPlansOffline(true);
       });
   }, [mode]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const token = new URLSearchParams(window.location.search).get("reset");
+    if (!token) return;
+    setResetToken(token);
+    setMode("reset");
+    setMessage("Choose a new password for your account.");
+    window.history.replaceState({}, "", "/login");
+  }, []);
 
   const saveSession = (result: AuthResult) => {
     localStorage.setItem("pm_access_token", result.accessToken);
@@ -175,23 +184,6 @@ export function AuthForm() {
     }
   };
 
-  const signInWithGoogleToken = async () => {
-    setError("");
-    setMessage("");
-    setLoading(true);
-    try {
-      const result = await apiRequest<AuthResult>("/auth/google", {
-        method: "POST",
-        body: JSON.stringify({ idToken: googleToken }),
-      });
-      saveSession(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Google sign in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const requestPhoneOtp = async () => {
     setError("");
     setMessage("");
@@ -234,23 +226,6 @@ export function AuthForm() {
     }
   };
 
-  const signInWithMicrosoftToken = async () => {
-    setError("");
-    setMessage("");
-    setLoading(true);
-    try {
-      const result = await apiRequest<AuthResult>("/auth/microsoft", {
-        method: "POST",
-        body: JSON.stringify({ idToken: microsoftToken }),
-      });
-      saveSession(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Microsoft sign in failed");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const containerClass =
     mode === "signup"
       ? "w-full max-w-5xl rounded-lg border border-gray-300 p-6 space-y-4 bg-white text-gray-900 shadow-sm"
@@ -283,7 +258,11 @@ export function AuthForm() {
 
       {mode === "signin" && (
         <div className="space-y-4">
-          <GoogleSignInButton onSuccess={saveSession} onError={setError} />
+          <div className="space-y-2">
+            <GoogleSignInButton onSuccess={saveSession} onError={setError} />
+            <MicrosoftSignInButton onSuccess={saveSession} onError={setError} />
+          </div>
+          <p className="text-center text-xs text-gray-500">or sign in with email</p>
         <form onSubmit={submitSignIn} className="space-y-3">
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
@@ -464,38 +443,6 @@ export function AuthForm() {
           </button>
         </form>
       )}
-
-      <details className="rounded border border-gray-300 p-3 bg-gray-50">
-        <summary className="cursor-pointer text-sm font-medium text-gray-900">Sign in with Google / Microsoft (Pilot Token Mode)</summary>
-        <div className="mt-3 space-y-2">
-          <input
-            className="w-full rounded border border-gray-300 p-2 text-sm text-gray-900 placeholder:text-gray-500"
-            placeholder="Google idToken"
-            value={googleToken}
-            onChange={(e) => setGoogleToken(e.target.value)}
-          />
-          <button
-            className="w-full rounded border border-gray-400 py-2 text-sm text-gray-900 hover:bg-white"
-            type="button"
-            onClick={signInWithGoogleToken}
-          >
-            Sign in with Google token
-          </button>
-          <input
-            className="w-full rounded border border-gray-300 p-2 text-sm text-gray-900 placeholder:text-gray-500"
-            placeholder="Microsoft idToken"
-            value={microsoftToken}
-            onChange={(e) => setMicrosoftToken(e.target.value)}
-          />
-          <button
-            className="w-full rounded border border-gray-400 py-2 text-sm text-gray-900 hover:bg-white"
-            type="button"
-            onClick={signInWithMicrosoftToken}
-          >
-            Sign in with Microsoft token
-          </button>
-        </div>
-      </details>
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {message ? <p className="text-sm text-blue-700">{message}</p> : null}

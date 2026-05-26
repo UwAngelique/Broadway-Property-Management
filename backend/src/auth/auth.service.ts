@@ -308,8 +308,9 @@ export class AuthService {
     await this.usersRepo.save(user);
 
     const isProduction = process.env.NODE_ENV === 'production';
-    const appUrl = process.env.APP_URL ?? 'http://localhost:3001';
-    const resetLink = `${appUrl}/?reset=${encodeURIComponent(plainToken)}`;
+    const appBase = (process.env.APP_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+    const loginUrl = appBase.endsWith('/login') ? appBase : `${appBase}/login`;
+    const resetLink = `${loginUrl}?reset=${encodeURIComponent(plainToken)}`;
 
     if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
       await this.notificationsService.sendEmail(
