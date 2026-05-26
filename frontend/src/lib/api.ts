@@ -1,3 +1,5 @@
+import { parseApiError } from "./api-errors";
+import { clearSession } from "./auth";
 import { refreshAccessToken } from "./token-refresh";
 
 /** Use /api proxy in browser (tunnel-friendly); direct URL for server or explicit env */
@@ -19,6 +21,9 @@ async function fetchWithAuth(path: string, options: RequestInit, accessToken?: s
     if (newToken) {
       headers.Authorization = `Bearer ${newToken}`;
       response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+    } else {
+      clearSession();
+      window.location.href = "/login";
     }
   }
 
@@ -33,19 +38,31 @@ export async function apiRequest<T>(
   const response = await fetchWithAuth(path, options, accessToken);
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Request failed with ${response.status}`);
+    throw new Error(parseApiError(text, response.status));
   }
   return response.json() as Promise<T>;
 }
 
 /** Download a binary (e.g. PDF) with Bearer auth; triggers browser save. */
 export async function apiDownload(path: string, accessToken: string, filename: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  let response = await fetch(`${API_BASE_URL}${path}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
+  if (response.status === 401 && typeof window !== "undefined") {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      response = await fetch(`${API_BASE_URL}${path}`, {
+        headers: { Authorization: `Bearer ${newToken}` },
+      });
+    } else {
+      clearSession();
+      window.location.href = "/login";
+      return;
+    }
+  }
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Download failed with ${response.status}`);
+    throw new Error(parseApiError(text, response.status));
   }
   const blob = await response.blob();
   const url = URL.createObjectURL(blob);
@@ -61,14 +78,28 @@ export async function apiUpload<T>(
   formData: FormData,
   accessToken: string,
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  let response = await fetch(`${API_BASE_URL}${path}`, {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}` },
     body: formData,
   });
+  if (response.status === 401 && typeof window !== "undefined") {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      response = await fetch(`${API_BASE_URL}${path}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${newToken}` },
+        body: formData,
+      });
+    } else {
+      clearSession();
+      window.location.href = "/login";
+      throw new Error(parseApiError("", 401));
+    }
+  }
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Upload failed with ${response.status}`);
+    throw new Error(parseApiError(text, response.status));
   }
   return response.json() as Promise<T>;
 }

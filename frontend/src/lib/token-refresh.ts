@@ -1,6 +1,7 @@
 "use client";
 
 import { API_BASE_URL } from "./api";
+import { clearSession } from "./auth";
 
 let refreshPromise: Promise<string | null> | null = null;
 
@@ -16,7 +17,10 @@ export async function refreshAccessToken(): Promise<string | null> {
       body: JSON.stringify({ refreshToken: refresh }),
     })
       .then(async (res) => {
-        if (!res.ok) return null;
+        if (!res.ok) {
+          clearSession();
+          return null;
+        }
         const data = (await res.json()) as {
           accessToken: string;
           refreshToken: string;

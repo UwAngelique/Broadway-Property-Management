@@ -19,6 +19,7 @@ import { User } from '../tenants/user.entity';
 import { Account } from '../accounts/account.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EventsGateway } from '../realtime/events.gateway';
+import { SyncService } from '../sync/sync.service';
 
 @Injectable()
 export class PaymentsService {
@@ -42,7 +43,12 @@ export class PaymentsService {
     private readonly paymentGatewayService: PaymentGatewayService,
     private readonly notificationsService: NotificationsService,
     private readonly eventsGateway: EventsGateway,
+    private readonly syncService: SyncService,
   ) {}
+
+  private bumpSync(accountId: number) {
+    this.syncService.notifyAccountSync(accountId);
+  }
 
   async getSettings(accountId: number) {
     let settings = await this.settingsRepo.findOne({ where: { accountId } });
@@ -56,7 +62,9 @@ export class PaymentsService {
   async updateSettings(accountId: number, dto: UpdatePaymentSettingsDto) {
     const settings = await this.getSettings(accountId);
     Object.assign(settings, dto);
-    return this.settingsRepo.save(settings);
+    const saved = await this.settingsRepo.save(settings);
+    this.bumpSync(accountId);
+    return saved;
   }
 
   async resolveTenantProfileId(accountId: number, userId: number) {
@@ -114,7 +122,9 @@ export class PaymentsService {
       monthlyRateRwf: quote.monthlyRateRwf,
       receiptRequested: Boolean(dto.requestEbmReceipt),
     });
-    return this.paymentsRepo.save(payment);
+    const saved = await this.paymentsRepo.save(payment);
+    this.bumpSync(accountId);
+    return saved;
   }
 
   async generateQuote(accountId: number, dto: PaymentQuoteDto) {
@@ -268,6 +278,7 @@ export class PaymentsService {
       created.push({ invoiceId: saved.id, tenantId: reminder.tenantId, month: billingMonth });
     }
 
+    if (created.length) this.bumpSync(accountId);
     return { createdCount: created.length, invoices: created };
   }
 
@@ -290,12 +301,15 @@ export class PaymentsService {
     rawBody?: string,
   ) {
     const secret = process.env.PAYMENT_WEBHOOK_SECRET;
-    if (secret && signature && rawBody) {
+    if (process.env.NODE_ENV === 'production' && !secret) {
+      throw new BadRequestException('Payment webhooks are not configured');
+    }
+    if (secret) {
+      if (!signature || !rawBody) {
+        throw new BadRequestException('Missing webhook signature');
+      }
       const crypto = await import('crypto');
-      const expected = crypto
-        .createHmac('sha256', secret)
-        .update(rawBody)
-        .digest('hex');
+      const expected = crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
       const normalized = signature.replace(/^sha256=/, '');
       if (expected !== normalized && signature !== expected) {
         throw new BadRequestException('Invalid webhook signature');
@@ -323,6 +337,7 @@ export class PaymentsService {
         payment.status = 'REJECTED';
       }
       await this.paymentsRepo.save(payment);
+      if (payment.accountId) this.bumpSync(payment.accountId);
     }
 
     return {
@@ -359,6 +374,7 @@ export class PaymentsService {
     payment.landlordNote = dto.landlordNote;
     const saved = await this.paymentsRepo.save(payment);
     this.eventsGateway.emitPaymentUpdate(accountId, saved);
+    this.bumpSync(accountId);
     return saved;
   }
 
@@ -367,7 +383,9 @@ export class PaymentsService {
     payment.rraPurchaseCode = purchaseCode;
     payment.status = 'RECEIPT_REQUESTED';
     payment.receiptRequested = true;
-    return this.paymentsRepo.save(payment);
+    const saved = await this.paymentsRepo.save(payment);
+    this.bumpSync(accountId);
+    return saved;
   }
 
   async markReceiptIssued(accountId: number, paymentId: number, receiptPath: string) {
@@ -377,7 +395,9 @@ export class PaymentsService {
     }
     payment.ebmReceiptPath = receiptPath;
     payment.status = 'RECEIPT_ISSUED';
-    return this.paymentsRepo.save(payment);
+    const saved = await this.paymentsRepo.save(payment);
+    this.bumpSync(accountId);
+    return saved;
   }
 
   getRwandaCommercialBanks() {

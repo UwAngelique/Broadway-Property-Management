@@ -27,12 +27,18 @@ async function bootstrap() {
     rawBody: true,
   });
 
+  const http = app.getHttpAdapter().getInstance();
+  if (typeof http?.set === 'function') {
+    http.set('trust proxy', 1);
+  }
+
   app.use(helmet({ contentSecurityPolicy: false }));
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
       transform: true,
-      forbidUnknownValues: false,
+      forbidUnknownValues: true,
+      forbidNonWhitelisted: true,
     }),
   );
 

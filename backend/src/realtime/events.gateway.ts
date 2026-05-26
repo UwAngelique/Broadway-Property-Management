@@ -9,9 +9,13 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtUserPayload } from '../auth/types';
 
+const wsOrigins = process.env.CORS_ORIGINS?.split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',').map((o) => o.trim()) ?? true,
+    origin: wsOrigins?.length ? wsOrigins : process.env.NODE_ENV !== 'production',
     credentials: true,
   },
   namespace: '/events',

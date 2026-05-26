@@ -1,39 +1,40 @@
+import type { TranslationKey } from "@/i18n";
 import type { SessionUser } from "./auth";
 
-export type NavItem = { href: string; label: string; roles?: string[] };
+export type NavItem = { href: string; labelKey: TranslationKey; roles?: string[] };
 
 export function navItemsFor(user: SessionUser): NavItem[] {
   if (user.role === "PLATFORM_OWNER") {
     return [
-      { href: "/dashboard", label: "Home" },
-      { href: "/dashboard/clients", label: "Clients" },
-      { href: "/dashboard/payments", label: "Finance" },
-      { href: "/dashboard/tax", label: "Tax" },
-      { href: "/dashboard/operations", label: "Operations" },
-      { href: "/dashboard/settings", label: "Settings" },
+      { href: "/dashboard", labelKey: "nav.home" },
+      { href: "/dashboard/clients", labelKey: "nav.clients" },
+      { href: "/dashboard/payments", labelKey: "nav.finance" },
+      { href: "/dashboard/tax", labelKey: "nav.tax" },
+      { href: "/dashboard/operations", labelKey: "nav.operations" },
+      { href: "/dashboard/settings", labelKey: "nav.settings" },
     ];
   }
   if (user.role === "TENANT") {
     return [
-      { href: "/dashboard/portal", label: "My portal" },
-      { href: "/dashboard/leases", label: "My lease" },
-      { href: "/dashboard/portal/pay", label: "Pay rent" },
+      { href: "/dashboard/portal", labelKey: "nav.portal" },
+      { href: "/dashboard/leases", labelKey: "nav.leases" },
+      { href: "/dashboard/portal/pay", labelKey: "nav.pay" },
     ];
   }
   const items: NavItem[] = [
-    { href: "/dashboard", label: "Home" },
-    { href: "/dashboard/onboarding", label: "Setup guide", roles: ["OWNER"] },
-    { href: "/dashboard/properties", label: "Properties" },
-    { href: "/dashboard/units", label: "Units" },
-    { href: "/dashboard/tenants", label: "Tenants" },
-    { href: "/dashboard/leases", label: "Leases" },
-    { href: "/dashboard/payments", label: "Payments" },
-    { href: "/dashboard/tax", label: "Tax" },
-    { href: "/dashboard/expenses", label: "Expenses", roles: ["OWNER", "ACCOUNTANT"] },
-    { href: "/dashboard/forecast", label: "Annual forecast" },
-    { href: "/dashboard/operations", label: "Operations" },
-    { href: "/dashboard/team", label: "Team", roles: ["OWNER"] },
-    { href: "/dashboard/settings", label: "Settings" },
+    { href: "/dashboard", labelKey: "nav.home" },
+    { href: "/dashboard/onboarding", labelKey: "nav.setup", roles: ["OWNER"] },
+    { href: "/dashboard/properties", labelKey: "nav.properties" },
+    { href: "/dashboard/units", labelKey: "nav.units" },
+    { href: "/dashboard/tenants", labelKey: "nav.tenants" },
+    { href: "/dashboard/leases", labelKey: "nav.leases" },
+    { href: "/dashboard/payments", labelKey: "nav.payments" },
+    { href: "/dashboard/tax", labelKey: "nav.tax" },
+    { href: "/dashboard/expenses", labelKey: "nav.expenses", roles: ["OWNER", "ACCOUNTANT"] },
+    { href: "/dashboard/forecast", labelKey: "nav.forecast" },
+    { href: "/dashboard/operations", labelKey: "nav.operations" },
+    { href: "/dashboard/team", labelKey: "nav.team", roles: ["OWNER"] },
+    { href: "/dashboard/settings", labelKey: "nav.settings" },
   ];
   return items.filter((i) => !i.roles || i.roles.includes(user.role));
 }

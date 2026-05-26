@@ -5,7 +5,9 @@ import { apiRequest } from "@/lib/api";
 import Image from "next/image";
 import { GoogleSignInButton } from "@/components/auth/google-sign-in-button";
 import { MicrosoftSignInButton } from "@/components/auth/microsoft-sign-in-button";
+import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 import { FALLBACK_PLANS_RESPONSE } from "@/lib/fallback-plans";
+import { useLanguage } from "@/components/i18n/language-provider";
 
 type AuthResult = {
   accessToken: string;
@@ -45,6 +47,7 @@ type BillingPlansResponse = {
 };
 
 export function AuthForm() {
+  const { t, apiLanguage } = useLanguage();
   const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -129,6 +132,7 @@ export function AuthForm() {
           password,
           accountName: accountName || undefined,
           selectedPlanId,
+          language: apiLanguage,
         }),
       });
       saveSession(result);
@@ -243,10 +247,13 @@ export function AuthForm() {
           className="h-auto w-[220px]"
         />
       </div>
+      <div className="flex justify-end">
+        <LanguageSwitcher />
+      </div>
       <h1 className="text-2xl font-semibold text-gray-900">Broadway Property Management</h1>
       <div className="flex gap-3 text-sm text-gray-800 flex-wrap">
         <button className="underline hover:text-black" onClick={() => setMode("signin")} type="button">
-          Sign In
+          {t("auth.signIn")}
         </button>
         <button className="underline hover:text-black" onClick={() => setMode("signup")} type="button">
           Sign Up
@@ -270,6 +277,7 @@ export function AuthForm() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
           <input
@@ -278,6 +286,7 @@ export function AuthForm() {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            autoComplete="current-password"
             required
           />
           <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>
@@ -392,8 +401,13 @@ export function AuthForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              minLength={8}
+              autoComplete="new-password"
               required
             />
+            <p className="text-xs text-gray-600">
+              Use at least 8 characters with a letter and a number. Your data is sent over an encrypted connection when the site uses HTTPS.
+            </p>
             <p className="text-xs text-gray-600">
               Selected plan: <span className="font-medium text-gray-900">{selectedPlanId}</span> — stored on your account for billing
               follow-up.

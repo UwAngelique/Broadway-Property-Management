@@ -2,6 +2,7 @@
 
 import { io, type Socket } from "socket.io-client";
 import { getToken } from "./auth";
+import { getWebSocketOrigin } from "./ws-base";
 
 let socket: Socket | null = null;
 
@@ -10,13 +11,10 @@ export function getRealtimeSocket(): Socket | null {
   const token = getToken();
   if (!token) return null;
 
-  const base =
-    process.env.NEXT_PUBLIC_WS_URL ??
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    (typeof window !== "undefined" ? window.location.origin : "");
+  const base = getWebSocketOrigin();
 
   if (!socket) {
-    socket = io(`${base.replace(/\/$/, "")}/events`, {
+    socket = io(`${base}/events`, {
       auth: { token },
       transports: ["websocket", "polling"],
       reconnection: true,

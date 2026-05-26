@@ -18,6 +18,7 @@ export function LoginScreen({ onLogin }: Props) {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const persistSession = async (r: AuthResult) => {
     await SecureStore.setItemAsync("access", r.accessToken);
@@ -28,6 +29,7 @@ export function LoginScreen({ onLogin }: Props) {
 
   const emailLogin = async () => {
     setError("");
+    setLoading(true);
     try {
       const r = await apiRequest<AuthResult>("/auth/login", {
         method: "POST",
@@ -35,7 +37,9 @@ export function LoginScreen({ onLogin }: Props) {
       });
       await persistSession(r);
     } catch (e) {
-      setError((e as Error).message);
+      setError(e instanceof Error ? e.message : "Sign in failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -85,7 +89,7 @@ export function LoginScreen({ onLogin }: Props) {
           onChangeText={setPassword}
           style={styles.input}
         />
-        <Button title="Sign in" onPress={emailLogin} color="#0f172a" />
+        <Button title={loading ? "Signing in…" : "Sign in"} onPress={emailLogin} color="#0f172a" disabled={loading} />
 
         <View style={{ marginTop: 28 }}>
           <Text style={styles.sectionTitle}>MTN / Airtel phone</Text>

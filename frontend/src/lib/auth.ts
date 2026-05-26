@@ -1,5 +1,9 @@
 "use client";
 
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ??
+  (typeof window !== "undefined" ? "/api" : "http://localhost:3000");
+
 export type SessionUser = {
   id: number;
   email: string;
@@ -34,9 +38,26 @@ export function requireAuth(): { token: string; user: SessionUser } | null {
   return { token, user };
 }
 
-export function logout() {
+export function clearSession() {
+  if (typeof window === "undefined") return;
   localStorage.removeItem("pm_access_token");
   localStorage.removeItem("pm_refresh_token");
   localStorage.removeItem("pm_user");
-  window.location.href = "/";
+  localStorage.removeItem("pm_sync_revision");
+}
+
+export async function logout() {
+  const token = getToken();
+  try {
+    if (token) {
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+    }
+  } catch {
+    /* still clear local session */
+  }
+  clearSession();
+  window.location.href = "/login";
 }

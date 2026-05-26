@@ -11,7 +11,7 @@ export function getExtra(): Extra {
 }
 
 export function getApiUrl() {
-  return getExtra().apiUrl ?? process.env.EXPO_PUBLIC_API_URL ?? "http://broadwaycreation.rw/api";
+  return getExtra().apiUrl ?? process.env.EXPO_PUBLIC_API_URL ?? "https://broadwaycreation.rw/api";
 }
 
 export function getPrivacyUrl() {

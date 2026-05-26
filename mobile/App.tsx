@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import * as SecureStore from "expo-secure-store";
+import { clearSession, logoutServer } from "./src/session";
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { HubScreen } from "./src/screens/HubScreen";
 import { ClientsScreen } from "./src/screens/ClientsScreen";
@@ -26,9 +27,8 @@ export default function App() {
   }, []);
 
   const logout = async () => {
-    await SecureStore.deleteItemAsync("access");
-    await SecureStore.deleteItemAsync("refresh");
-    await SecureStore.deleteItemAsync("user");
+    await logoutServer();
+    await clearSession();
     setLoggedIn(false);
   };
 

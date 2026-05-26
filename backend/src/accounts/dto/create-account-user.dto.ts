@@ -1,12 +1,14 @@
-import { IsBoolean, IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsIn, IsOptional } from 'class-validator';
 import type { UserRole } from '../../tenants/user.entity';
+import { USER_LANGUAGES } from '../../common/languages';
+import type { UserLanguage } from '../../common/languages';
+import { ApplyPasswordPolicy } from '../../common/password-policy';
 
 export class CreateAccountUserDto {
   @IsEmail()
   email: string;
 
-  @IsString()
-  @MinLength(6)
+  @ApplyPasswordPolicy()
   password: string;
 
   @IsIn(['OWNER', 'ACCOUNTANT', 'LAWYER', 'TENANT'])
@@ -18,6 +20,6 @@ export class CreateAccountUserDto {
   startInactive?: boolean;
 
   @IsOptional()
-  @IsIn(['EN', 'FR', 'SW', 'RW'])
-  language?: 'EN' | 'FR' | 'SW' | 'RW';
+  @IsIn(USER_LANGUAGES)
+  language?: UserLanguage;
 }

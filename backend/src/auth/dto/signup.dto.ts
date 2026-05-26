@@ -1,31 +1,24 @@
-import type { UserRole } from '../../tenants/user.entity';
-import { IsEmail, IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString } from 'class-validator';
 import { SUBSCRIPTION_PLAN_IDS } from '../../billing/plan-catalog';
+import { USER_LANGUAGES } from '../../common/languages';
+import type { UserLanguage } from '../../common/languages';
+import { ApplyPasswordPolicy } from '../../common/password-policy';
 
 export class SignupDto {
   @IsEmail()
   email: string;
 
-  @IsOptional()
-  @IsString()
-  @MinLength(6)
-  password?: string;
+  @ApplyPasswordPolicy()
+  password: string;
 
   @IsOptional()
-  @IsIn(['OWNER', 'ACCOUNTANT', 'LAWYER', 'TENANT'])
-  role?: UserRole;
+  @IsIn(USER_LANGUAGES)
+  language?: UserLanguage;
 
-  @IsOptional()
-  @IsIn(['EN', 'FR', 'SW', 'RW'])
-  language?: 'EN' | 'FR' | 'SW' | 'RW';
-
+  /** Creates a new landlord workspace (public signup cannot join an existing account). */
   @IsOptional()
   @IsString()
   accountName?: string;
-
-  @IsOptional()
-  @IsInt()
-  accountId?: number;
 
   /** Must match a plan id from GET /billing/plans */
   @IsOptional()

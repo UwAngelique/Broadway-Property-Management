@@ -15,12 +15,14 @@ import { User } from '../tenants/user.entity';
 import { Account } from '../accounts/account.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { RealtimeModule } from '../realtime/realtime.module';
+import { SyncModule } from '../sync/sync.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Payment, PaymentSettings, Contract, ContractVersion, Invoice, TenantProfile, User, Account]),
     AuditModule,
     NotificationsModule,
     RealtimeModule,
+    SyncModule,
   ],
   providers: [PaymentsService, PaymentGatewayService, RolesGuard],
   controllers: [PaymentsController],

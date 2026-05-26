@@ -10,7 +10,8 @@ import {
 import { Account } from '../accounts/account.entity';
 
 export type UserRole = 'PLATFORM_OWNER' | 'OWNER' | 'ACCOUNTANT' | 'LAWYER' | 'TENANT';
-export type UserLanguage = 'EN' | 'FR' | 'SW' | 'RW';
+import type { UserLanguage } from '../common/languages';
+export type { UserLanguage };
 
 @Entity({ name: 'users' })
 export class User {

@@ -23,6 +23,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { SyncModule } from './sync/sync.module';
 
 dotenv.config();
 
@@ -58,6 +59,7 @@ dotenv.config();
     SchedulerModule,
     ReconciliationModule,
     RealtimeModule,
+    SyncModule,
     BuildingsModule,
     UnitsModule,
     TenantsModule,

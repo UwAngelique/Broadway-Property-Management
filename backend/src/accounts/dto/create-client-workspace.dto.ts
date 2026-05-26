@@ -1,5 +1,8 @@
-import { IsEmail, IsIn, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString } from 'class-validator';
 import type { AccountActivationStatus } from '../account.entity';
+import { USER_LANGUAGES } from '../../common/languages';
+import type { UserLanguage } from '../../common/languages';
+import { ApplyPasswordPolicy } from '../../common/password-policy';
 
 export class CreateClientWorkspaceDto {
   @IsString()
@@ -8,8 +11,7 @@ export class CreateClientWorkspaceDto {
   @IsEmail()
   ownerEmail: string;
 
-  @IsString()
-  @MinLength(6)
+  @ApplyPasswordPolicy()
   ownerPassword: string;
 
   /** New landlord workspaces start PENDING until you activate them (default). */
@@ -18,6 +20,6 @@ export class CreateClientWorkspaceDto {
   initialActivationStatus?: AccountActivationStatus;
 
   @IsOptional()
-  @IsString()
-  language?: 'EN' | 'FR' | 'SW' | 'RW';
+  @IsIn(USER_LANGUAGES)
+  language?: UserLanguage;
 }

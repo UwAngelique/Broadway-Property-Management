@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -14,6 +14,7 @@ import { AuditService } from '../audit/audit.service';
 import type { Request } from 'express';
 import { PhoneRequestOtpDto } from './dto/phone-request-otp.dto';
 import { PhoneVerifyOtpDto } from './dto/phone-verify-otp.dto';
+import { UpdateLanguageDto } from './dto/update-language.dto';
 import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
@@ -90,6 +91,7 @@ export class AuthController {
   }
 
   @Post('google')
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   googleSignIn(@Body() dto: GoogleSigninDto, @Req() req: Request) {
     return this.authService.googleSignIn(dto).then(async (result) => {
       await this.auditService.log({
@@ -109,6 +111,7 @@ export class AuthController {
   }
 
   @Post('microsoft')
+  @Throttle({ default: { limit: 15, ttl: 60000 } })
   microsoftSignIn(@Body() dto: MicrosoftSigninDto, @Req() req: Request) {
     return this.authService.microsoftSignIn(dto).then(async (result) => {
       await this.auditService.log({
@@ -128,16 +131,19 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle({ default: { limit: 30, ttl: 60000 } })
   refresh(@Body() dto: RefreshTokenDto) {
     return this.authService.refresh(dto.refreshToken);
   }
 
   @Post('forgot-password')
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto.email);
   }
 
   @Post('reset-password')
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
   }
@@ -166,5 +172,11 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: JwtUserPayload) {
     return this.authService.me(user.sub);
+  }
+
+  @Patch('me/language')
+  @UseGuards(JwtAuthGuard)
+  updateLanguage(@CurrentUser() user: JwtUserPayload, @Body() dto: UpdateLanguageDto) {
+    return this.authService.updateLanguage(user.sub, dto.language);
   }
 }

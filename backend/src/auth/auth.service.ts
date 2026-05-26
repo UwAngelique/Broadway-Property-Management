@@ -17,6 +17,7 @@ import { LoginDto } from './dto/login.dto';
 import { GoogleSigninDto } from './dto/google-signin.dto';
 import { MicrosoftSigninDto } from './dto/microsoft-signin.dto';
 import { JwtUserPayload } from './types';
+import type { UserLanguage } from '../common/languages';
 
 @Injectable()
 export class AuthService {
@@ -40,21 +41,15 @@ export class AuthService {
     if (existing) {
       throw new ConflictException('Email already exists');
     }
-    if (!dto.password) {
-      throw new BadRequestException('Password is required for email signup');
-    }
-
-    const accountId = await this.resolveAccountId(dto.accountId, dto.accountName, dto.email);
+    const accountId = await this.resolveAccountId(undefined, dto.accountName, dto.email);
     if (dto.selectedPlanId) {
       await this.accountsService.setSubscriptionPlan(accountId, dto.selectedPlanId);
     }
     const passwordHash = await hash(dto.password, 10);
-    const isNewWorkspace = !dto.accountId;
-    const defaultRole = isNewWorkspace ? 'OWNER' : 'TENANT';
     const user = this.usersRepo.create({
       email: dto.email,
       passwordHash,
-      role: dto.role ?? defaultRole,
+      role: 'OWNER',
       language: dto.language ?? 'EN',
       isActive: true,
       accountId,
@@ -94,7 +89,7 @@ export class AuthService {
 
     let user = await this.usersRepo.findOne({ where: { email: payload.email } });
     if (!user) {
-      const accountId = await this.resolveAccountId(dto.accountId, dto.accountName, payload.email);
+      const accountId = await this.resolveAccountId(undefined, dto.accountName, payload.email);
       user = this.usersRepo.create({
         email: payload.email,
         role: 'TENANT',
@@ -113,6 +108,16 @@ export class AuthService {
 
     await this.assertUserMayAuthenticate(user);
     return this.buildAuthResponse(user);
+  }
+
+  async updateLanguage(userId: number, language: UserLanguage) {
+    const user = await this.usersRepo.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    user.language = language;
+    await this.usersRepo.save(user);
+    return { language: user.language };
   }
 
   async me(userId: number) {
@@ -158,7 +163,7 @@ export class AuthService {
 
     let user = await this.usersRepo.findOne({ where: { email } });
     if (!user) {
-      const accountId = await this.resolveAccountId(dto.accountId, dto.accountName, email);
+      const accountId = await this.resolveAccountId(undefined, dto.accountName, email);
       user = this.usersRepo.create({
         email,
         role: 'TENANT',
