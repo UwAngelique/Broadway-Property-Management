@@ -6,7 +6,11 @@ export function parseApiError(body: string, status?: number): string {
       if (Array.isArray(json.message)) return json.message.join(". ");
       if (typeof json.message === "string" && json.message.length > 0) return json.message;
     } catch {
-      if (body.length < 180 && !body.trimStart().startsWith("{")) return body.trim();
+      const trimmed = body.trim();
+      if (/^internal server error$/i.test(trimmed)) {
+        return "Something went wrong on our side. Please try again shortly.";
+      }
+      if (trimmed.length < 180 && !trimmed.startsWith("{")) return trimmed;
     }
   }
 
@@ -15,12 +19,7 @@ export function parseApiError(body: string, status?: number): string {
   if (status === 404) return "We could not find what you requested.";
   if (status === 409) return "This record already exists.";
   if (status === 429) return "Too many attempts. Please wait a moment and try again.";
-  if (status && status >= 500) {
-    if (body && /internal server error/i.test(body)) {
-      return "Something went wrong on our side. Please try again shortly.";
-    }
-    return "Something went wrong on our side. Please try again shortly.";
-  }
+  if (status && status >= 500) return "Something went wrong on our side. Please try again shortly.";
 
   return "Something went wrong. Please try again.";
 }

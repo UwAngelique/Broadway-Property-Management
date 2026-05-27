@@ -250,7 +250,7 @@ export function AuthForm() {
       <div className="flex justify-end">
         <LanguageSwitcher />
       </div>
-      <h1 className="text-2xl font-semibold text-gray-900">Broadway Property Management</h1>
+      <h1 className="text-2xl font-semibold text-gray-900">{t("auth.appTitle")}</h1>
       <div className="flex gap-3 text-sm text-gray-800 flex-wrap">
         <button className="underline hover:text-black" onClick={() => setMode("signin")} type="button">
           {t("auth.signIn")}
