@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { validateProductionEnv } from './config/env.validation';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import * as fs from 'fs';
 import helmet from 'helmet';
 
@@ -33,6 +34,7 @@ async function bootstrap() {
   }
 
   app.use(helmet({ contentSecurityPolicy: false }));
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

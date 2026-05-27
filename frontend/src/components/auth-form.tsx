@@ -90,9 +90,9 @@ export function AuthForm() {
     if (!token) return;
     setResetToken(token);
     setMode("reset");
-    setMessage("Choose a new password for your account.");
+    setMessage(t("auth.chooseNewPassword"));
     window.history.replaceState({}, "", "/login");
-  }, []);
+  }, [t]);
 
   const saveSession = (result: AuthResult) => {
     localStorage.setItem("pm_access_token", result.accessToken);
@@ -157,7 +157,7 @@ export function AuthForm() {
         setMessage(`Reset token: ${result.resetToken} (expires ${result.expiresAt})`);
         setMode("reset");
       } else {
-        setMessage("If your email exists, a reset process has been started.");
+        setMessage(t("auth.resetStarted"));
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Forgot password failed");
@@ -176,7 +176,7 @@ export function AuthForm() {
         method: "POST",
         body: JSON.stringify({ token: resetToken, newPassword }),
       });
-      setMessage("Password reset successful. You can now sign in.");
+      setMessage(t("auth.passwordResetSuccess"));
       setMode("signin");
       setPassword("");
       setNewPassword("");
@@ -199,7 +199,7 @@ export function AuthForm() {
       });
       setOtpSent(true);
       setMessage(
-        r.devCode ? `Dev OTP: ${r.devCode}` : "Verification code sent via SMS (MTN/Airtel).",
+        r.devCode ? `Dev OTP: ${r.devCode}` : t("auth.smsSent"),
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send code");
@@ -256,10 +256,10 @@ export function AuthForm() {
           {t("auth.signIn")}
         </button>
         <button className="underline hover:text-black" onClick={() => setMode("signup")} type="button">
-          Sign Up
+          {t("auth.signUp")}
         </button>
         <button className="underline hover:text-black" onClick={() => setMode("forgot")} type="button">
-          Forgot Password
+          {t("auth.forgotPassword")}
         </button>
       </div>
 
@@ -269,11 +269,11 @@ export function AuthForm() {
             <GoogleSignInButton onSuccess={saveSession} onError={setError} />
             <MicrosoftSignInButton onSuccess={saveSession} onError={setError} />
           </div>
-          <p className="text-center text-xs text-gray-500">or sign in with email</p>
+          <p className="text-center text-xs text-gray-500">{t("auth.signInWithEmail")}</p>
         <form onSubmit={submitSignIn} className="space-y-3">
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-            placeholder="Email"
+            placeholder={t("auth.email")}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -282,7 +282,7 @@ export function AuthForm() {
           />
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-            placeholder="Password"
+            placeholder={t("auth.password")}
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -290,32 +290,32 @@ export function AuthForm() {
             required
           />
           <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? t("auth.signingIn") : t("auth.signIn")}
           </button>
         </form>
           <div className="border-t pt-4 space-y-2">
-            <p className="text-sm font-medium text-gray-800">MTN / Airtel phone (Rwanda)</p>
+            <p className="text-sm font-medium text-gray-800">{t("auth.phoneRwanda")}</p>
             <input
               className="w-full rounded border border-gray-300 p-2"
-              placeholder="0781234567"
+              placeholder={t("auth.phonePlaceholder")}
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
             {!otpSent ? (
               <button type="button" className="w-full rounded border py-2 text-sm" disabled={loading} onClick={requestPhoneOtp}>
-                Send SMS code
+                {t("auth.sendSmsCode")}
               </button>
             ) : (
               <form onSubmit={verifyPhoneOtp} className="space-y-2">
                 <input
                   className="w-full rounded border border-gray-300 p-2"
-                  placeholder="6-digit code"
+                  placeholder={t("auth.otpPlaceholder")}
                   value={otpCode}
                   onChange={(e) => setOtpCode(e.target.value)}
                   required
                 />
                 <button className="w-full rounded bg-gray-900 text-white py-2 text-sm" disabled={loading}>
-                  Verify & sign in
+                  {t("auth.verifyAndSignIn")}
                 </button>
               </form>
             )}
@@ -326,11 +326,8 @@ export function AuthForm() {
       {mode === "signup" && (
         <div className="space-y-6">
           <div>
-            <h2 className="text-lg font-medium text-gray-900 mb-1">Choose your plan</h2>
-            <p className="text-sm text-gray-600 mb-3">
-              All features are listed per tier. Final billing, VAT, and contracts are confirmed at onboarding. Enterprise &amp; platform
-              partner pricing is agreed separately.
-            </p>
+            <h2 className="text-lg font-medium text-gray-900 mb-1">{t("auth.choosePlan")}</h2>
+            <p className="text-sm text-gray-600 mb-3">{t("auth.planIntro")}</p>
             {plansPayload?.disclaimer ? <p className="text-xs text-gray-500 mb-3">{plansPayload.disclaimer}</p> : null}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {(plansPayload?.plans ?? []).map((plan) => (
@@ -360,7 +357,7 @@ export function AuthForm() {
                     {plan.features.slice(0, 6).map((f, i) => (
                       <li key={`${plan.id}-${i}`}>{f}</li>
                     ))}
-                    {plan.features.length > 6 ? <li>…and more in this tier</li> : null}
+                    {plan.features.length > 6 ? <li>{t("auth.andMore")}</li> : null}
                   </ul>
                   <div className="text-[11px] text-gray-500 border-t pt-2 mt-auto">
                     {plan.limits.map((l) => (
@@ -374,22 +371,22 @@ export function AuthForm() {
             </div>
             {plansOffline ? (
               <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded p-2">
-                Showing offline plan list (API unreachable). Start the backend on port 3000 for live pricing; signup still works with these plan IDs.
+                {t("auth.offlinePlans")}
               </p>
             ) : null}
           </div>
 
           <form onSubmit={submitSignUp} className="space-y-3 border-t pt-4">
-            <h2 className="text-lg font-medium text-gray-900">Create your workspace</h2>
+            <h2 className="text-lg font-medium text-gray-900">{t("auth.createWorkspace")}</h2>
             <input
               className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-              placeholder="Workspace / Business Name"
+              placeholder={t("auth.workspaceName")}
               value={accountName}
               onChange={(e) => setAccountName(e.target.value)}
             />
             <input
               className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-              placeholder="Email"
+              placeholder={t("auth.email")}
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -397,7 +394,7 @@ export function AuthForm() {
             />
             <input
               className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-              placeholder="Password"
+              placeholder={t("auth.password")}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -405,15 +402,12 @@ export function AuthForm() {
               autoComplete="new-password"
               required
             />
+            <p className="text-xs text-gray-600">{t("auth.passwordHint")}</p>
             <p className="text-xs text-gray-600">
-              Use at least 8 characters with a letter and a number. Your data is sent over an encrypted connection when the site uses HTTPS.
-            </p>
-            <p className="text-xs text-gray-600">
-              Selected plan: <span className="font-medium text-gray-900">{selectedPlanId}</span> — stored on your account for billing
-              follow-up.
+              {t("auth.selectedPlan")} <span className="font-medium text-gray-900">{selectedPlanId}</span>
             </p>
             <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>
-              {loading ? "Creating account..." : "Sign Up"}
+              {loading ? t("auth.creatingAccount") : t("auth.signUp")}
             </button>
           </form>
         </div>
@@ -423,14 +417,14 @@ export function AuthForm() {
         <form onSubmit={submitForgot} className="space-y-3">
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-            placeholder="Your email"
+            placeholder={t("auth.yourEmail")}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
           <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>
-            {loading ? "Submitting..." : "Request Password Reset"}
+            {loading ? t("auth.submitting") : t("auth.requestPasswordReset")}
           </button>
         </form>
       )}
@@ -439,28 +433,28 @@ export function AuthForm() {
         <form onSubmit={submitReset} className="space-y-3">
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-            placeholder="Reset token"
+            placeholder={t("auth.resetToken")}
             value={resetToken}
             onChange={(e) => setResetToken(e.target.value)}
             required
           />
           <input
             className="w-full rounded border border-gray-300 p-2 text-gray-900 placeholder:text-gray-500"
-            placeholder="New password"
+            placeholder={t("auth.newPassword")}
             type="password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
           />
           <button className="w-full rounded bg-gray-900 text-white py-2 hover:bg-black" disabled={loading}>
-            {loading ? "Resetting..." : "Reset Password"}
+            {loading ? t("auth.resetting") : t("auth.resetPasswordBtn")}
           </button>
         </form>
       )}
 
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {message ? <p className="text-sm text-blue-700">{message}</p> : null}
-      <p className="text-xs text-gray-500">Note: username recovery is email-based; use &quot;Forgot Password&quot; with your email.</p>
+      <p className="text-xs text-gray-500">{t("auth.usernameNote")}</p>
     </div>
   );
 }

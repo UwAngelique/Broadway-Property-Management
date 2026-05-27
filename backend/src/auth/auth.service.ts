@@ -21,6 +21,10 @@ import type { UserLanguage } from '../common/languages';
 
 @Injectable()
 export class AuthService {
+  private normalizeAuthEmail(email: string) {
+    return email.trim().toLowerCase();
+  }
+
   private readonly googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
   private readonly microsoftJwks = createRemoteJWKSet(
     new URL('https://login.microsoftonline.com/common/discovery/v2.0/keys'),
@@ -37,17 +41,18 @@ export class AuthService {
   ) {}
 
   async signup(dto: SignupDto) {
-    const existing = await this.usersRepo.findOne({ where: { email: dto.email } });
+    const email = this.normalizeAuthEmail(dto.email);
+    const existing = await this.usersRepo.findOne({ where: { email } });
     if (existing) {
       throw new ConflictException('Email already exists');
     }
-    const accountId = await this.resolveAccountId(undefined, dto.accountName, dto.email);
+    const accountId = await this.resolveAccountId(undefined, dto.accountName, email);
     if (dto.selectedPlanId) {
       await this.accountsService.setSubscriptionPlan(accountId, dto.selectedPlanId);
     }
     const passwordHash = await hash(dto.password, 10);
     const user = this.usersRepo.create({
-      email: dto.email,
+      email,
       passwordHash,
       role: 'OWNER',
       language: dto.language ?? 'EN',
@@ -61,7 +66,7 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const user = await this.usersRepo.findOne({ where: { email: dto.email } });
+    const user = await this.usersRepo.findOne({ where: { email: this.normalizeAuthEmail(dto.email) } });
     if (!user || !user.passwordHash) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -301,7 +306,8 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
-    const user = await this.usersRepo.findOne({ where: { email } });
+    const normalizedEmail = this.normalizeAuthEmail(email);
+    const user = await this.usersRepo.findOne({ where: { email: normalizedEmail } });
     if (!user) {
       return { success: true };
     }
@@ -339,12 +345,14 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const users = await this.usersRepo.find();
     const now = new Date();
+    const users = await this.usersRepo
+      .createQueryBuilder('user')
+      .where('user.passwordResetTokenHash IS NOT NULL')
+      .andWhere('user.passwordResetTokenExpiresAt > :now', { now })
+      .getMany();
     for (const user of users) {
-      if (!user.passwordResetTokenHash || !user.passwordResetTokenExpiresAt) continue;
-      if (user.passwordResetTokenExpiresAt < now) continue;
-      const match = await compare(token, user.passwordResetTokenHash);
+      const match = await compare(token, user.passwordResetTokenHash!);
       if (!match) continue;
       user.passwordHash = await hash(newPassword, 10);
       user.passwordResetTokenHash = undefined;

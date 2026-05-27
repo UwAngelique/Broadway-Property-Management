@@ -24,6 +24,7 @@ import { ReconciliationModule } from './reconciliation/reconciliation.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { SyncModule } from './sync/sync.module';
+import { ListingsModule } from './listings/listings.module';
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ dotenv.config();
     ReconciliationModule,
     RealtimeModule,
     SyncModule,
+    ListingsModule,
     BuildingsModule,
     UnitsModule,
     TenantsModule,

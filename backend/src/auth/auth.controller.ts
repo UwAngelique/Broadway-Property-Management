@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Logger, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
@@ -19,10 +19,20 @@ import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
   ) {}
+
+  private async safeAudit(input: Parameters<AuditService['log']>[0]) {
+    try {
+      await this.auditService.log(input);
+    } catch (err) {
+      this.logger.warn(`Audit log skipped: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
 
   @Post('phone/request-otp')
   @Throttle({ default: { limit: 5, ttl: 60000 } })
@@ -34,7 +44,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   verifyPhoneOtp(@Body() dto: PhoneVerifyOtpDto, @Req() req: Request) {
     return this.authService.verifyPhoneOtp(dto).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: result.user.accountId,
         userId: result.user.id,
         userEmail: result.user.email ?? dto.phone,
@@ -54,7 +64,7 @@ export class AuthController {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   signup(@Body() dto: SignupDto, @Req() req: Request) {
     return this.authService.signup(dto).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: result.user.accountId,
         userId: result.user.id,
         userEmail: result.user.email ?? '',
@@ -74,7 +84,7 @@ export class AuthController {
   @Throttle({ default: { limit: 20, ttl: 60000 } })
   login(@Body() dto: LoginDto, @Req() req: Request) {
     return this.authService.login(dto).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: result.user.accountId,
         userId: result.user.id,
         userEmail: result.user.email ?? '',
@@ -94,7 +104,7 @@ export class AuthController {
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   googleSignIn(@Body() dto: GoogleSigninDto, @Req() req: Request) {
     return this.authService.googleSignIn(dto).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: result.user.accountId,
         userId: result.user.id,
         userEmail: result.user.email ?? '',
@@ -114,7 +124,7 @@ export class AuthController {
   @Throttle({ default: { limit: 15, ttl: 60000 } })
   microsoftSignIn(@Body() dto: MicrosoftSigninDto, @Req() req: Request) {
     return this.authService.microsoftSignIn(dto).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: result.user.accountId,
         userId: result.user.id,
         userEmail: result.user.email ?? '',
@@ -152,7 +162,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   logout(@CurrentUser() user: JwtUserPayload, @Req() req: Request) {
     return this.authService.logout(user.sub).then(async (result) => {
-      await this.auditService.log({
+      await this.safeAudit({
         accountId: user.accountId,
         userId: user.sub,
         userEmail: user.email,

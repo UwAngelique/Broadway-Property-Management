@@ -15,7 +15,12 @@ export function parseApiError(body: string, status?: number): string {
   if (status === 404) return "We could not find what you requested.";
   if (status === 409) return "This record already exists.";
   if (status === 429) return "Too many attempts. Please wait a moment and try again.";
-  if (status && status >= 500) return "Something went wrong on our side. Please try again shortly.";
+  if (status && status >= 500) {
+    if (body && /internal server error/i.test(body)) {
+      return "Something went wrong on our side. Please try again shortly.";
+    }
+    return "Something went wrong on our side. Please try again shortly.";
+  }
 
   return "Something went wrong. Please try again.";
 }
