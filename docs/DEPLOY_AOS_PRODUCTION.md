@@ -2,6 +2,19 @@
 
 Production runs on an **AOS Ltd** Ubuntu server (`197.243.29.113`). Deploy by pulling `main` on the server and restarting PM2. **GitHub Actions** can do this automatically over SSH when secrets are configured.
 
+## 0. Confirm single production environment (critical)
+
+If `www.broadwaycreation.rw` still points to Vercel (or any host other than AOS), users will see stale builds and auth may fail due to wrong API origin.
+
+Run these checks from your machine:
+
+```bash
+nslookup broadwaycreation.rw
+nslookup www.broadwaycreation.rw
+```
+
+Both records must resolve to `197.243.29.113` (AOS). If `www` is a `vercel.app` CNAME or another IP, update DNS at AOS before deploying code.
+
 ## 1. One-time server setup
 
 SSH into the VPS (credentials from AOS / your hosting panel):
@@ -49,14 +62,15 @@ DB_SYNCHRONIZE=false
 DB_SSL=false
 JWT_SECRET=<32+ random chars>
 JWT_REFRESH_SECRET=<32+ random chars>
-CORS_ORIGINS=http://broadwaycreation.rw,http://www.broadwaycreation.rw
-APP_URL=http://broadwaycreation.rw
+CORS_ORIGINS=https://broadwaycreation.rw,https://www.broadwaycreation.rw,http://broadwaycreation.rw,http://www.broadwaycreation.rw
+APP_URL=https://broadwaycreation.rw
 ```
 
 **frontend/.env.production**:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=/api
+NEXT_PUBLIC_CANONICAL_HOST=broadwaycreation.rw
 API_PROXY_TARGET=http://127.0.0.1:3000
 ```
 

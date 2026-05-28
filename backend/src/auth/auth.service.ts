@@ -92,11 +92,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid Google token');
     }
 
-    let user = await this.usersRepo.findOne({ where: { email: payload.email } });
+    const googleEmail = this.normalizeAuthEmail(payload.email);
+    let user = await this.usersRepo.findOne({ where: { email: googleEmail } });
     if (!user) {
-      const accountId = await this.resolveAccountId(undefined, dto.accountName, payload.email);
+      const accountId = await this.resolveAccountId(undefined, dto.accountName, googleEmail);
       user = this.usersRepo.create({
-        email: payload.email,
+        email: googleEmail,
         role: 'TENANT',
         language: 'EN',
         isActive: true,
@@ -165,12 +166,12 @@ export class AuthService {
     if (!email || !subject) {
       throw new UnauthorizedException('Invalid Microsoft token');
     }
-
-    let user = await this.usersRepo.findOne({ where: { email } });
+    const normalizedEmail = this.normalizeAuthEmail(email);
+    let user = await this.usersRepo.findOne({ where: { email: normalizedEmail } });
     if (!user) {
-      const accountId = await this.resolveAccountId(undefined, dto.accountName, email);
+      const accountId = await this.resolveAccountId(undefined, dto.accountName, normalizedEmail);
       user = this.usersRepo.create({
-        email,
+        email: normalizedEmail,
         role: 'TENANT',
         language: 'EN',
         isActive: true,
@@ -319,7 +320,7 @@ export class AuthService {
     await this.usersRepo.save(user);
 
     const isProduction = process.env.NODE_ENV === 'production';
-    const appBase = (process.env.APP_URL ?? 'http://localhost:3001').replace(/\/$/, '');
+    const appBase = (process.env.APP_URL ?? 'https://broadwaycreation.rw').replace(/\/$/, '');
     const loginUrl = appBase.endsWith('/login') ? appBase : `${appBase}/login`;
     const resetLink = `${loginUrl}?reset=${encodeURIComponent(plainToken)}`;
 

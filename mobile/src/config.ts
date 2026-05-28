@@ -15,9 +15,9 @@ export function getApiUrl() {
 }
 
 export function getPrivacyUrl() {
-  return getExtra().privacyUrl ?? process.env.EXPO_PUBLIC_PRIVACY_URL ?? "http://broadwaycreation.rw/legal/privacy";
+  return getExtra().privacyUrl ?? process.env.EXPO_PUBLIC_PRIVACY_URL ?? "https://broadwaycreation.rw/legal/privacy";
 }
 
 export function getTermsUrl() {
-  return getExtra().termsUrl ?? process.env.EXPO_PUBLIC_TERMS_URL ?? "http://broadwaycreation.rw/legal/terms";
+  return getExtra().termsUrl ?? process.env.EXPO_PUBLIC_TERMS_URL ?? "https://broadwaycreation.rw/legal/terms";
 }
