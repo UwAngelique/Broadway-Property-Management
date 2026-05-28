@@ -1,8 +1,9 @@
 import type { ExpoConfig } from "expo/config";
 
-const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "https://broadwaycreation.rw/api";
-const privacyUrl = process.env.EXPO_PUBLIC_PRIVACY_URL ?? "https://broadwaycreation.rw/legal/privacy";
-const termsUrl = process.env.EXPO_PUBLIC_TERMS_URL ?? "https://broadwaycreation.rw/legal/terms";
+// TODO: switch these defaults to https after SSL is active on production.
+const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? "http://broadwaycreation.rw/api";
+const privacyUrl = process.env.EXPO_PUBLIC_PRIVACY_URL ?? "http://broadwaycreation.rw/legal/privacy";
+const termsUrl = process.env.EXPO_PUBLIC_TERMS_URL ?? "http://broadwaycreation.rw/legal/terms";
 
 const config: ExpoConfig = {
   name: "Broadway PM",

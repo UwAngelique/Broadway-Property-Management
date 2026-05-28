@@ -320,7 +320,8 @@ export class AuthService {
     await this.usersRepo.save(user);
 
     const isProduction = process.env.NODE_ENV === 'production';
-    const appBase = (process.env.APP_URL ?? 'https://broadwaycreation.rw').replace(/\/$/, '');
+    // TODO: switch fallback to https after SSL is enabled on production.
+    const appBase = (process.env.APP_URL ?? 'http://broadwaycreation.rw').replace(/\/$/, '');
     const loginUrl = appBase.endsWith('/login') ? appBase : `${appBase}/login`;
     const resetLink = `${loginUrl}?reset=${encodeURIComponent(plainToken)}`;
 

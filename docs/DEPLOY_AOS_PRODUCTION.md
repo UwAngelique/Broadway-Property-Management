@@ -63,7 +63,7 @@ DB_SSL=false
 JWT_SECRET=<32+ random chars>
 JWT_REFRESH_SECRET=<32+ random chars>
 CORS_ORIGINS=https://broadwaycreation.rw,https://www.broadwaycreation.rw,http://broadwaycreation.rw,http://www.broadwaycreation.rw
-APP_URL=https://broadwaycreation.rw
+APP_URL=http://broadwaycreation.rw  # switch to https:// after SSL is active
 ```
 
 **frontend/.env.production**:
