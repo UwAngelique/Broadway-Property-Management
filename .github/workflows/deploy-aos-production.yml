@@ -63,6 +63,6 @@ jobs:
           pf=$(curl -s -o /dev/null -w '%{http_code}' http://broadwaycreation.rw/api/platform/finance)
           echo "GET /api/platform/finance (no auth) -> $pf"
           if [ "$pf" = "404" ]; then
-            echo "::error::API still missing /platform/finance — deploy may have failed or wrong path"
+            echo "::error::API still missing /platform/finance - deploy may have failed or wrong path"
             exit 1
           fi
