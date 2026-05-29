@@ -33,7 +33,7 @@ jobs:
           npm run build
           mkdir -p dist/migrations
           npx tsc migrations/*.ts --target ES2023 --module commonjs --moduleResolution node --esModuleInterop --skipLibCheck --outDir dist/migrations
-          pm2 restart broadway-backend --update-env
+          pm2 restart broadway-backend --update-env || pm2 start "node dist/main.js" --name broadway-backend
 
       - name: Build and restart frontend
         env:
@@ -43,7 +43,7 @@ jobs:
           cd "$APP_DIR/frontend"
           npm ci
           npm run build
-          pm2 restart broadway-frontend --update-env
+          pm2 restart broadway-frontend --update-env || pm2 start "npm run start -- -p 3001" --name broadway-frontend
 
       - name: Save PM2 process list
         run: pm2 save
