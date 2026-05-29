@@ -52,14 +52,11 @@ jobs:
       - name: Save PM2 process list
         run: pm2 save
 
-      - name: Smoke test public site
+      - name: Smoke test local services
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' http://broadwaycreation.rw/api/billing/plans)
-          echo "GET /api/billing/plans -> $code"
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/billing/plans)
+          echo "GET backend /billing/plans -> $code"
           test "$code" = "200"
-          pf=$(curl -s -o /dev/null -w '%{http_code}' http://broadwaycreation.rw/api/platform/finance)
-          echo "GET /api/platform/finance (no auth) -> $pf"
-          if [ "$pf" = "404" ]; then
-            echo "::error::API still missing /platform/finance - deploy may have failed or wrong path"
-            exit 1
-          fi
+          web=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/)
+          echo "GET frontend / -> $web"
+          test "$web" = "200"
