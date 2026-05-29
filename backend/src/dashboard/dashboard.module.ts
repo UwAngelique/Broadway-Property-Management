@@ -34,5 +34,6 @@ import { TaxObligation } from '../compliance/tax-obligation.entity';
   ],
   controllers: [DashboardController],
   providers: [DashboardService],
+  exports: [DashboardService],
 })
 export class DashboardModule {}

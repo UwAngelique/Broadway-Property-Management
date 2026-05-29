@@ -47,7 +47,10 @@ dotenv.config();
       autoLoadEntities: true,
       synchronize: process.env.DB_SYNCHRONIZE === 'true',
       migrationsRun: process.env.DB_MIGRATIONS_RUN === 'true',
-      migrations: [__dirname + '/../migrations/*{.ts,.js}'],
+      migrations:
+        process.env.NODE_ENV === 'production'
+          ? [__dirname + '/migrations/*.js']
+          : [__dirname + '/../migrations/*{.ts,.js}'],
       ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
     }),
     AccountsModule,
