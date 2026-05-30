@@ -54,9 +54,24 @@ jobs:
 
       - name: Smoke test local services
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/billing/plans)
-          echo "GET backend /billing/plans -> $code"
-          test "$code" = "200"
-          web=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/)
-          echo "GET frontend / -> $web"
-          test "$web" = "200"
+          wait_for_http() {
+            local name="$1"
+            local url="$2"
+            local expected="$3"
+
+            for attempt in $(seq 1 30); do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+              echo "GET $name -> $code (attempt $attempt)"
+              if [ "$code" = "$expected" ]; then
+                return 0
+              fi
+              sleep 2
+            done
+
+            echo "::error::$name did not return HTTP $expected"
+            pm2 logs --lines 80 --nostream || true
+            return 1
+          }
+
+          wait_for_http "backend /billing/plans" "http://127.0.0.1:3000/billing/plans" "200"
+          wait_for_http "frontend /" "http://127.0.0.1:3001/" "200"
