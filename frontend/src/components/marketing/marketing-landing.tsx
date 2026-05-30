@@ -151,7 +151,7 @@ export function MarketingLanding() {
 
       <footer className="border-t bg-white">
         <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
-          <span>© {new Date().getFullYear()} Broadway Creation</span>
+          <span>© {new Date().getFullYear()} Broadway Creation · Powered By Realtimeteck ltd</span>
           <div className="flex gap-4">
             <Link href="/about" className="hover:text-gray-800">
               {t("landing.navAbout")}
